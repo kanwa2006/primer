@@ -42,3 +42,5 @@ addopts = "-v"
 tmp_path_retention_policy = "failed"
 
 [tool.setuptools.packages.find]
+where = ["."]
+include = ["primer*"]

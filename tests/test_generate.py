@@ -248,13 +248,15 @@ class TestGetProvider:
             get_provider(config)
 
     def test_post_mvp_provider_raises_value_error(self, monkeypatch):
-        for prov in ("openai", "gemini", "openrouter"):
-            monkeypatch.setenv("PRIMER_LLM_PROVIDER", prov)
-            from primer.config import Settings
-            from primer.llm.factory import get_provider
-            config = Settings()
-            with pytest.raises(ValueError, match="Post-MVP"):
-                get_provider(config)
+        # Phase 5: openai/gemini/openrouter are now implemented.
+        # They raise ConfigError (missing key), not ValueError("Post-MVP").
+        # Verify unknown provider still raises ValueError.
+        monkeypatch.setenv("PRIMER_LLM_PROVIDER", "unknown_provider_xyz")
+        from primer.config import Settings
+        from primer.llm.factory import get_provider
+        config = Settings()
+        with pytest.raises(ValueError):
+            get_provider(config)
 
     def test_anthropic_missing_key_raises(self, monkeypatch):
         monkeypatch.setenv("PRIMER_LLM_PROVIDER", "anthropic")

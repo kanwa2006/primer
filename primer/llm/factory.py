@@ -43,14 +43,43 @@ def get_provider(config: Settings) -> LLMProvider:
             model=config.ollama_model,
         )
 
-    # POST-MVP providers
-    if provider in ("openai", "gemini", "openrouter"):
-        raise ValueError(
-            f"Provider {provider!r} is Post-MVP and not yet implemented. "
-            "Use 'anthropic' or 'ollama'."
+    if provider == "openai":
+        from primer.llm.openai import OpenAIProvider
+        if config.openai_api_key is None:
+            from primer.errors import ConfigError
+            raise ConfigError(
+                "Provider 'openai' requires OPENAI_API_KEY to be set."
+            )
+        return OpenAIProvider(
+            api_key=config.openai_api_key.get_secret_value(),
+            model=config.primer_default_model,
+        )
+
+    if provider == "gemini":
+        from primer.llm.gemini import GeminiProvider
+        if config.gemini_api_key is None:
+            from primer.errors import ConfigError
+            raise ConfigError(
+                "Provider 'gemini' requires GEMINI_API_KEY to be set."
+            )
+        return GeminiProvider(
+            api_key=config.gemini_api_key.get_secret_value(),
+            model=config.primer_default_model,
+        )
+
+    if provider == "openrouter":
+        from primer.llm.openrouter import OpenRouterProvider
+        if config.openrouter_api_key is None:
+            from primer.errors import ConfigError
+            raise ConfigError(
+                "Provider 'openrouter' requires OPENROUTER_API_KEY to be set."
+            )
+        return OpenRouterProvider(
+            api_key=config.openrouter_api_key.get_secret_value(),
+            model=config.primer_default_model,
         )
 
     raise ValueError(
         f"Unknown LLM provider: {provider!r}. "
-        "Supported providers: anthropic, ollama (openai/gemini/openrouter are Post-MVP)."
+        "Supported providers: anthropic, openai, gemini, openrouter, ollama."
     )

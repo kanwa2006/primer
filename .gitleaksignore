@@ -1,0 +1,10 @@
+# Allowlist for known false positives detected by gitleaks.
+# These are test fixtures and security-tool baseline files, not real secrets.
+
+# detect-secrets baseline: hashed_secret values are SHA-1 hashes of secrets,
+# not secrets themselves.
+.secrets.baseline:generic-api-key:130
+
+# test_security_scaffold.py plants a dummy key to verify the hooks work.
+# This is intentional test data, not a real credential.
+tests/test_security_scaffold.py:generic-api-key:87

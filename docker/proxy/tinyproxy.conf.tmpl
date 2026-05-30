@@ -1,0 +1,18 @@
+# tinyproxy.conf.tmpl — deny-by-default egress proxy (Spec B)
+# ${ALLOW_HOST} is replaced at container start with the agent's API hostname.
+# Only HTTPS CONNECT to that host on port 443 is permitted.
+
+Port 8888
+Listen 0.0.0.0
+Timeout 600
+MaxClients 10
+LogLevel Error
+
+# Deny everything not explicitly allowed (Spec B step 3)
+FilterDefaultDeny Yes
+
+# Allow CONNECT to TLS port only
+ConnectPort 443
+
+# Filter file contains exactly: ${ALLOW_HOST}
+Filter "/etc/tinyproxy/allow.txt"

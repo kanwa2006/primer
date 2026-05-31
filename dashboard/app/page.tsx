@@ -3,6 +3,7 @@
 import { useEffect, useState, useReducer } from "react";
 import { motion } from "motion/react";
 import { EmptyState } from "@/components/EmptyState";
+import { MeasurementIdentity } from "@/components/MeasurementIdentity";
 import { VerdictHero } from "@/components/VerdictHero";
 import { MetricsGrid } from "@/components/MetricsGrid";
 import { TaskFlipTable } from "@/components/TaskFlipTable";
@@ -75,6 +76,9 @@ export default function Home() {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.2 }}
           >
+            {/* Measurement identity — what was measured, by whom, how */}
+            <MeasurementIdentity data={state.data} />
+
             {/* Warnings — always first if present */}
             <WarningBanner
               providerMismatch={state.data.provider_mismatch_warning}

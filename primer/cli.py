@@ -1,7 +1,7 @@
-"""PRIMER CLI — composition root (Phase 4).
+"""PRIMER CLI -- composition root (Phase 4 + Phase 6).
 
-Three commands: init, eval, report.
-This is the ONLY orchestrator — no other module imports cli.py.
+Commands: init, eval, report, history, compare.
+This is the ONLY orchestrator -- no other module imports cli.py.
 
 Security invariant: no API key value ever appears in logs/output.
 Two-stream rule: PRIMER overhead (generation) is always separate from eval cost.
@@ -18,7 +18,7 @@ from rich.console import Console
 
 app = typer.Typer(
     name="primer",
-    help="PRIMER — a measurement harness for AI coding agent context files.",
+    help="PRIMER -- a measurement harness for AI coding agent context files.",
     add_completion=False,
 )
 
@@ -61,7 +61,7 @@ def init(
         msg = str(exc)
         if "_API_KEY" in msg and "to be set" in msg:
             typer.echo(
-                "primer init: not yet implemented — configure API keys first "
+                "primer init: not yet implemented -- configure API keys first "
                 "(see .env.example).",
             )
             raise typer.Exit(code=2)
@@ -115,7 +115,7 @@ def init(
     out_path.write_text(result.content, encoding="utf-8")
     _console.print(f"[green]Wrote {out_path} ({result.lines} lines)[/green]")
 
-    # PRIMER overhead — shown on a separate line, never confused with eval cost
+    # PRIMER overhead -- shown on a separate line, never confused with eval cost
     from primer.report.render import _format_cost
     overhead_str = _format_cost(result.usage.cost_usd, result.usage.cost_confidence)
     _console.print(f"\n[dim]PRIMER overhead (generation): {overhead_str}[/dim]")
@@ -168,7 +168,7 @@ def eval(  # noqa: A001
         msg = str(exc)
         if "_API_KEY" in msg and "to be set" in msg:
             typer.echo(
-                "primer eval: not yet implemented — configure API keys first "
+                "primer eval: not yet implemented -- configure API keys first "
                 "(see .env.example).",
             )
             raise typer.Exit(code=2)
@@ -281,7 +281,7 @@ def eval(  # noqa: A001
         conn.close()
     except Exception as exc:
         typer.echo(f"Warning: failed to persist report: {exc}", err=True)
-        # Don't abort — still render
+        # Don't abort -- still render
 
     # Render
     render_report(score_report, fmt="text", console=_console)
@@ -309,7 +309,7 @@ def report(
         msg = str(exc)
         if "_API_KEY" in msg and "to be set" in msg:
             typer.echo(
-                "primer report: not yet implemented — configure API keys first "
+                "primer report: not yet implemented -- configure API keys first "
                 "(see .env.example).",
             )
             raise typer.Exit(code=2)
@@ -336,3 +336,105 @@ def report(
 
     fmt = format if format in ("text", "json") else "text"
     render_report(score_report, fmt=fmt, console=_console)
+
+
+# ---------------------------------------------------------------------------
+# history  (Phase 6)
+# ---------------------------------------------------------------------------
+
+@app.command()
+def history(
+    path: Optional[str] = typer.Argument(
+        None,
+        help="Path to the repository root (omit to list all repos).",
+    ),
+    limit: int = typer.Option(20, help="Maximum number of reports to show."),
+) -> None:
+    """List past evaluation reports stored in the database.
+
+    Shows report ID, repo, commit, date, delta, provider/model, and agent.
+    Use the report ID with 'primer compare' to diff two runs.
+    """
+    from primer.config import Settings
+    from primer.errors import ConfigError
+    from primer.store.db import init_db, list_reports
+    from primer.report.render import render_history_table
+
+    try:
+        config = Settings()
+        # history only needs DB access -- skip provider/agent key validation
+    except ConfigError as exc:
+        typer.echo(f"Configuration error: {exc}", err=True)
+        raise typer.Exit(code=1)
+
+    repo_path = str(Path(path).resolve()) if path is not None else None
+
+    try:
+        conn = init_db(config)
+        rows = list_reports(conn, repo_path=repo_path, limit=limit)
+        conn.close()
+    except Exception as exc:
+        typer.echo(f"Database error: {exc}", err=True)
+        raise typer.Exit(code=1)
+
+    if not rows:
+        msg = (
+            f"No reports found for {repo_path}."
+            if repo_path
+            else "No reports found. Run 'primer eval .' first."
+        )
+        typer.echo(msg)
+        raise typer.Exit(code=0)
+
+    render_history_table(rows, console=_console)
+
+
+# ---------------------------------------------------------------------------
+# compare  (Phase 6)
+# ---------------------------------------------------------------------------
+
+@app.command()
+def compare(
+    report_a: int = typer.Argument(help="ID of the first report (baseline)."),
+    report_b: int = typer.Argument(help="ID of the second report (new)."),
+) -> None:
+    """Compare two persisted reports side by side.
+
+    Mismatch guard (Q9d): if the two reports used different providers or models,
+    the cross-report delta is refused and a warning is shown instead.
+    Isolation mismatches are also flagged.
+    """
+    from primer.config import Settings
+    from primer.errors import ConfigError
+    from primer.store.db import init_db, get_report_by_id
+    from primer.report.render import render_compare
+
+    try:
+        config = Settings()
+    except ConfigError as exc:
+        typer.echo(f"Configuration error: {exc}", err=True)
+        raise typer.Exit(code=1)
+
+    try:
+        conn = init_db(config)
+        ra = get_report_by_id(conn, report_a)
+        rb = get_report_by_id(conn, report_b)
+        conn.close()
+    except Exception as exc:
+        typer.echo(f"Database error: {exc}", err=True)
+        raise typer.Exit(code=1)
+
+    if ra is None:
+        typer.echo(f"Report ID {report_a} not found.", err=True)
+        raise typer.Exit(code=1)
+    if rb is None:
+        typer.echo(f"Report ID {report_b} not found.", err=True)
+        raise typer.Exit(code=1)
+
+    render_compare(
+        report_a=ra,
+        report_b=rb,
+        id_a=report_a,
+        id_b=report_b,
+        console=_console,
+    )

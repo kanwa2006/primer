@@ -1,4 +1,4 @@
-"""SQLite persistence — the ONLY module in PRIMER that imports sqlite3.
+"""SQLite persistence -- the ONLY module in PRIMER that imports sqlite3.
 
 Boundary invariant: only primer/store/ imports sqlite3.
 raw_output/logs are always redacted (log_safe()) before any write.
@@ -24,34 +24,27 @@ _SCHEMA_SQL = Path(__file__).parent / "schema.sql"
 
 
 def init_db(config: "Settings") -> sqlite3.Connection:
-    """Open (or create) the database, apply schema, and return the connection.
+    """Open (or create) the database, apply schema and migrations, return connection.
 
-    Sets schema_version in _meta on first creation.
+    Phase 6: calls apply_migrations() after schema.sql to handle version upgrades.
+    Raises store.migrations.SchemaTooNewError if the db was written by a newer PRIMER.
     """
+    from primer.store.migrations import apply_migrations
+
     db_path = _resolve_db_path(config.database_url)
     conn = sqlite3.connect(str(db_path))
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
     conn.execute("PRAGMA journal_mode = WAL")
 
-    # Apply schema
+    # Apply baseline schema (idempotent CREATE TABLE IF NOT EXISTS)
     schema_sql = _SCHEMA_SQL.read_text(encoding="utf-8")
     conn.executescript(schema_sql)
 
-    # Set schema version if not already set
-    row = conn.execute(
-        "SELECT value FROM _meta WHERE key = 'schema_version'"
-    ).fetchone()
-    if row is None:
-        conn.execute(
-            "INSERT INTO _meta (key, value) VALUES ('schema_version', ?)",
-            (_SCHEMA_VERSION,),
-        )
-        conn.commit()
-        log.info("initialised database at %s (schema v%s)", db_path, _SCHEMA_VERSION)
-    else:
-        log.debug("database at %s (schema v%s)", db_path, row["value"])
+    # Apply any pending migrations and ensure schema_version is set
+    apply_migrations(conn)
 
+    log.debug("database ready at %s (schema v%s)", db_path, _SCHEMA_VERSION)
     return conn
 
 
@@ -190,6 +183,51 @@ def latest_report(conn: sqlite3.Connection, repo_path: str) -> "ScoreReport | No
         """SELECT * FROM reports WHERE repo_path = ?
            ORDER BY id DESC LIMIT 1""",
         (repo_path,),
+    ).fetchone()
+    if row is None:
+        return None
+    return _row_to_score_report(conn, row)
+
+
+def list_reports(
+    conn: sqlite3.Connection,
+    repo_path: str | None = None,
+    limit: int = 20,
+) -> list[dict]:
+    """Return summary rows for recent reports.
+
+    Each dict has: id, repo_path, repo_commit, created_at, n_tasks,
+    runs_per_config, success_delta, provider, model, agent_adapter.
+
+    Args:
+        repo_path: If given, filter to this repo only.
+        limit:     Max rows to return (default 20).
+    """
+    if repo_path is not None:
+        rows = conn.execute(
+            """SELECT id, repo_path, repo_commit, created_at, n_tasks,
+                      runs_per_config, success_delta, provider, model, agent_adapter
+               FROM reports WHERE repo_path = ?
+               ORDER BY id DESC LIMIT ?""",
+            (repo_path, limit),
+        ).fetchall()
+    else:
+        rows = conn.execute(
+            """SELECT id, repo_path, repo_commit, created_at, n_tasks,
+                      runs_per_config, success_delta, provider, model, agent_adapter
+               FROM reports
+               ORDER BY id DESC LIMIT ?""",
+            (limit,),
+        ).fetchall()
+    return [dict(r) for r in rows]
+
+
+def get_report_by_id(
+    conn: sqlite3.Connection, report_id: int
+) -> "ScoreReport | None":
+    """Return a ScoreReport by its integer primary key, or None."""
+    row = conn.execute(
+        "SELECT * FROM reports WHERE id = ?", (report_id,)
     ).fetchone()
     if row is None:
         return None

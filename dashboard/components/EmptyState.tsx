@@ -10,7 +10,7 @@ export function EmptyState() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
     >
-      <div className="w-12 h-12 rounded-full border border-zinc-700 flex items-center justify-center mb-6">
+      <div className="w-12 h-12 rounded-full border border-zinc-300 flex items-center justify-center mb-6">
         <svg
           width="20"
           height="20"
@@ -25,22 +25,22 @@ export function EmptyState() {
         </svg>
       </div>
 
-      <h2 className="text-zinc-100 text-xl font-semibold tracking-tight mb-2">
+      <h2 className="text-zinc-900 text-xl font-semibold tracking-tight mb-2">
         No report data
       </h2>
       <p className="text-zinc-500 text-sm max-w-[40ch] leading-relaxed mb-6">
         Run{" "}
-        <code className="font-mono text-zinc-300 bg-zinc-800 px-1.5 py-0.5 rounded text-xs">
+        <code className="font-mono text-zinc-700 bg-zinc-100 px-1.5 py-0.5 rounded text-xs">
           primer eval .
         </code>{" "}
         then{" "}
-        <code className="font-mono text-zinc-300 bg-zinc-800 px-1.5 py-0.5 rounded text-xs">
+        <code className="font-mono text-zinc-700 bg-zinc-100 px-1.5 py-0.5 rounded text-xs">
           primer export --data-output dashboard/public/data.json
         </code>{" "}
         to generate report data.
       </p>
 
-      <div className="text-xs font-mono text-zinc-700 tracking-widest uppercase">
+      <div className="text-xs font-mono text-zinc-400 tracking-widest uppercase">
         PRIMER — a measurement harness
       </div>
     </motion.div>

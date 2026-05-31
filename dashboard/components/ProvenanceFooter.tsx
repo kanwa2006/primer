@@ -11,10 +11,10 @@ interface ProvenanceFooterProps {
 function Field({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex flex-col gap-0.5">
-      <span className="text-zinc-600 text-xs font-mono uppercase tracking-widest">
+      <span className="text-zinc-500 text-xs font-mono uppercase tracking-widest">
         {label}
       </span>
-      <span className="text-zinc-400 text-xs font-mono break-all">{value}</span>
+      <span className="text-zinc-600 text-xs font-mono break-all">{value}</span>
     </div>
   );
 }
@@ -39,11 +39,11 @@ export function ProvenanceFooter({ data }: ProvenanceFooterProps) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
     >
-      <div className="text-zinc-600 text-xs font-mono uppercase tracking-widest mb-3">
+      <div className="text-zinc-500 text-xs font-mono uppercase tracking-widest mb-3">
         Provenance
       </div>
 
-      <div className="border border-zinc-800 rounded-lg p-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      <div className="border border-zinc-200 rounded-lg p-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         <Field label="Provider" value={provider} />
         <Field label="Model" value={model} />
         <Field label="Agent" value={agent_adapter} />
@@ -60,7 +60,7 @@ export function ProvenanceFooter({ data }: ProvenanceFooterProps) {
         />
       </div>
 
-      <p className="text-zinc-700 text-xs font-mono mt-3">
+      <p className="text-zinc-400 text-xs font-mono mt-3">
         PRIMER overhead is the cost of generating the context file (Layer-1 provider).
         It is never included in the eval cost delta above.
       </p>

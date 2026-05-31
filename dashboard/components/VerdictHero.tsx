@@ -52,13 +52,13 @@ export function VerdictHero({ data }: VerdictHeroProps) {
       </div>
 
       {/* Description */}
-      <p className="text-zinc-400 text-sm max-w-[60ch] leading-relaxed">
+      <p className="text-zinc-600 text-sm max-w-[60ch] leading-relaxed">
         {VERDICT_DESCRIPTION[verdict] ?? ""}
       </p>
 
       {/* Noise threshold note */}
       {verdict !== "refused" && (
-        <p className="text-zinc-600 text-xs font-mono">
+        <p className="text-zinc-500 text-xs font-mono">
           noise threshold = max(1/{n_tasks}, σ={success_stddev.toFixed(3)}) ={" "}
           {noiseThreshold.toFixed(3)}
         </p>

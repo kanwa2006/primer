@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 html {
@@ -12,8 +12,8 @@ html {
 }
 
 body {
-  background-color: #09090b; /* zinc-950 */
-  color: #fafafa;             /* zinc-50 */
+  background-color: #fafafa; /* zinc-50 */
+  color: #18181b;             /* zinc-900 */
 }
 
 /* Ensure monospace numbers are tabular */

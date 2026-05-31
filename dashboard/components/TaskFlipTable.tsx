@@ -20,7 +20,7 @@ function TaskRow({ task, index }: TaskRowProps) {
   return (
     <motion.tr
       key={task.task_id}
-      className="border-b border-zinc-800 last:border-0"
+      className="border-b border-zinc-200 last:border-0"
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{
@@ -31,10 +31,10 @@ function TaskRow({ task, index }: TaskRowProps) {
     >
       <td className="py-3 pr-6">
         <div className="flex flex-col gap-0.5">
-          <span className="font-mono text-xs text-zinc-300 break-all">
+          <span className="font-mono text-xs text-zinc-700 break-all">
             {task.task_id}
           </span>
-          <span className="text-zinc-600 text-xs font-mono">{task.task_type}</span>
+          <span className="text-zinc-500 text-xs font-mono">{task.task_type}</span>
         </div>
       </td>
 
@@ -46,15 +46,15 @@ function TaskRow({ task, index }: TaskRowProps) {
         </span>
       </td>
 
-      <td className="py-3 pr-6 font-mono text-xs text-zinc-400">
+      <td className="py-3 pr-6 font-mono text-xs text-zinc-600">
         {formatPct(task.pass_rate_without)} / {formatPct(task.pass_rate_with)}
       </td>
 
-      <td className="py-3 pr-6 font-mono text-xs text-zinc-400">
+      <td className="py-3 pr-6 font-mono text-xs text-zinc-600">
         {formatDelta(task.delta)}
       </td>
 
-      <td className="py-3 text-xs font-mono text-zinc-600">
+      <td className="py-3 text-xs font-mono text-zinc-500">
         {task.flaky_any && (
           <span className="text-amber-500">flaky</span>
         )}
@@ -70,7 +70,7 @@ interface TaskFlipTableProps {
 export function TaskFlipTable({ tasks }: TaskFlipTableProps) {
   if (tasks.length === 0) {
     return (
-      <div className="text-zinc-600 text-xs font-mono py-4">
+      <div className="text-zinc-500 text-xs font-mono py-4">
         No per-task data.
       </div>
     );
@@ -78,27 +78,27 @@ export function TaskFlipTable({ tasks }: TaskFlipTableProps) {
 
   return (
     <div>
-      <div className="text-zinc-600 text-xs font-mono uppercase tracking-widest mb-3">
+      <div className="text-zinc-500 text-xs font-mono uppercase tracking-widest mb-3">
         Per-task flips
       </div>
 
       <div className="overflow-x-auto">
         <table className="w-full min-w-[600px] text-sm" role="table">
           <thead>
-            <tr className="border-b border-zinc-800">
-              <th className="pb-2 text-left text-xs font-mono text-zinc-600 uppercase tracking-widest pr-6">
+            <tr className="border-b border-zinc-200">
+              <th className="pb-2 text-left text-xs font-mono text-zinc-500 uppercase tracking-widest pr-6">
                 Task
               </th>
-              <th className="pb-2 text-left text-xs font-mono text-zinc-600 uppercase tracking-widest pr-6">
+              <th className="pb-2 text-left text-xs font-mono text-zinc-500 uppercase tracking-widest pr-6">
                 Flip
               </th>
-              <th className="pb-2 text-left text-xs font-mono text-zinc-600 uppercase tracking-widest pr-6">
+              <th className="pb-2 text-left text-xs font-mono text-zinc-500 uppercase tracking-widest pr-6">
                 Without / With
               </th>
-              <th className="pb-2 text-left text-xs font-mono text-zinc-600 uppercase tracking-widest pr-6">
+              <th className="pb-2 text-left text-xs font-mono text-zinc-500 uppercase tracking-widest pr-6">
                 Delta
               </th>
-              <th className="pb-2 text-left text-xs font-mono text-zinc-600 uppercase tracking-widest" />
+              <th className="pb-2 text-left text-xs font-mono text-zinc-500 uppercase tracking-widest" />
             </tr>
           </thead>
           <tbody>

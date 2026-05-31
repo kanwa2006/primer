@@ -26,11 +26,11 @@ function MetricCell({ label, value, sub, index }: MetricCellProps) {
       <span className="text-zinc-500 text-xs uppercase tracking-widest font-mono">
         {label}
       </span>
-      <span className="text-zinc-100 text-2xl font-mono font-semibold tracking-tight">
+      <span className="text-zinc-900 text-2xl font-mono font-semibold tracking-tight">
         {value}
       </span>
       {sub && (
-        <span className="text-zinc-600 text-xs font-mono">{sub}</span>
+        <span className="text-zinc-500 text-xs font-mono">{sub}</span>
       )}
     </motion.div>
   );
@@ -58,12 +58,12 @@ export function MetricsGrid({ data }: MetricsGridProps) {
   return (
     <div>
       {/* Section header */}
-      <div className="text-zinc-600 text-xs font-mono uppercase tracking-widest mb-3">
+      <div className="text-zinc-500 text-xs font-mono uppercase tracking-widest mb-3">
         Metrics
       </div>
 
       {/* Success rates */}
-      <div className="border-t border-zinc-800 grid grid-cols-2 md:grid-cols-4 divide-x divide-zinc-800">
+      <div className="border-t border-zinc-200 grid grid-cols-2 md:grid-cols-4 divide-x divide-zinc-200">
         <MetricCell
           label="Without"
           value={formatPct(success_rate_without)}
@@ -91,7 +91,7 @@ export function MetricsGrid({ data }: MetricsGridProps) {
       </div>
 
       {/* Cost row */}
-      <div className="border-t border-zinc-800 grid grid-cols-2 md:grid-cols-3 divide-x divide-zinc-800">
+      <div className="border-t border-zinc-200 grid grid-cols-2 md:grid-cols-3 divide-x divide-zinc-200">
         <MetricCell
           label="Cost without"
           value={formatCost(cost_without, cost_confidence)}

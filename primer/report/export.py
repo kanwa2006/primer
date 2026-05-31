@@ -239,3 +239,102 @@ def write_dashboard_json(report: "ScoreReport", output_path: Path) -> dict:
     payload = build_dashboard_json(report)
     output_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
     return payload
+
+
+# ---------------------------------------------------------------------------
+# Phase P0 (V2) — site export builders
+# ---------------------------------------------------------------------------
+
+def build_evaluation_json(
+    report_id: int,
+    report: "ScoreReport",
+    repo_name: str,
+    repo_url: "str | None",
+) -> dict:
+    """Build the evaluations/<id>.json payload (V2 §3.2).
+
+    Returns build_dashboard_json(report) merged with V2 additions.
+    schema_version is overridden to 2; build_dashboard_json is not mutated.
+    No DB access; accepts plain dataclasses/ints (boundary invariant held).
+    """
+    payload = build_dashboard_json(report)
+    payload["schema_version"] = 2
+    payload["kind"] = "evaluation"
+    payload["id"] = report_id
+    payload["repo"] = {"name": repo_name, "url": repo_url}
+    return payload
+
+
+def build_repository_json(
+    repo_name: str,
+    repo_url: "str | None",
+    items: "list[tuple[int, ScoreReport]]",
+    generated_at: str,
+) -> dict:
+    """Build the repository.json payload (V2 §3.1).
+
+    items: newest-first list of (reports.id, ScoreReport).
+    No DB access; accepts plain dataclasses/ints (boundary invariant held).
+    """
+    evaluations = []
+    for eval_id, report in items:
+        n = report.n_tasks
+        noise_threshold = max(1 / n, report.success_stddev) if n > 0 else report.success_stddev
+        evaluations.append({
+            "id": eval_id,
+            "repo_commit": report.repo_commit,
+            "created_at": report.created_at,
+            "verdict": _compute_verdict(report.success_delta, n, report.success_stddev),
+            "success_delta": report.success_delta,
+            "success_stddev": report.success_stddev,
+            "n_tasks": n,
+            "runs_per_config": report.runs_per_config,
+            "noise_threshold": noise_threshold,
+            "provider": report.provider,
+            "model": report.model,
+            "agent_adapter": report.agent_adapter,
+            "egress_enforced": report.egress_enforced,
+        })
+
+    if items:
+        latest_id: "int | None" = items[0][0]
+        latest_report = items[0][1]
+        latest_verdict: "str | None" = _compute_verdict(
+            latest_report.success_delta,
+            latest_report.n_tasks,
+            latest_report.success_stddev,
+        )
+        latest_commit = latest_report.repo_commit
+    else:
+        latest_id = None
+        latest_verdict = None
+        latest_commit = ""
+
+    return {
+        "schema_version": 2,
+        "kind": "repository",
+        "repo": {
+            "name": repo_name,
+            "url": repo_url,
+            "latest_commit": latest_commit,
+        },
+        "latest_evaluation_id": latest_id,
+        "latest_verdict": latest_verdict,
+        "evaluation_count": len(items),
+        "evaluations": evaluations,
+        "generated_at": generated_at,
+    }
+
+
+def write_evaluation_json(payload: dict, output_path: Path) -> dict:
+    """Write an evaluation payload to output_path; mkdir parents as needed."""
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    return payload
+
+
+def write_repository_json(payload: dict, output_path: Path) -> dict:
+    """Write a repository payload to output_path; mkdir parents as needed."""
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    return payload

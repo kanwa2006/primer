@@ -4,6 +4,7 @@ import { useEffect, useState, useReducer } from "react";
 import { motion } from "motion/react";
 import { EmptyState } from "@/components/EmptyState";
 import { MeasurementIdentity } from "@/components/MeasurementIdentity";
+import { TrustArchitecture } from "@/components/TrustArchitecture";
 import { VerdictHero } from "@/components/VerdictHero";
 import { MetricsGrid } from "@/components/MetricsGrid";
 import { TaskFlipTable } from "@/components/TaskFlipTable";
@@ -88,6 +89,9 @@ export default function Home() {
 
             {/* Measurement identity — what was measured, by whom, how */}
             <MeasurementIdentity data={state.data} />
+
+            {/* Trust architecture — why the result is credible */}
+            <TrustArchitecture data={state.data} />
 
             {/* Metrics grid */}
             <MetricsGrid data={state.data} />

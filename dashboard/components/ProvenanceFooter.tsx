@@ -60,7 +60,7 @@ export function ProvenanceFooter({ data }: ProvenanceFooterProps) {
         />
       </div>
 
-      <p className="text-zinc-400 text-xs font-mono mt-3">
+      <p className="text-zinc-500 text-xs font-mono mt-3">
         PRIMER overhead is the cost of generating the context file (Layer-1 provider).
         It is never included in the eval cost delta above.
       </p>

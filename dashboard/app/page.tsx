@@ -44,7 +44,7 @@ export default function Home() {
             <span className="font-mono text-sm font-semibold text-zinc-900 tracking-tight">
               PRIMER
             </span>
-            <span className="text-zinc-400 text-xs font-mono">scorecard</span>
+            <span className="text-zinc-500 text-xs font-mono">scorecard</span>
           </div>
 
           {state.status === "ok" && (

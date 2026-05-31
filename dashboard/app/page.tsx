@@ -20,7 +20,7 @@ export default function Home() {
   const [state, setState] = useState<State>({ status: "loading" });
 
   useEffect(() => {
-    fetch("/data.json")
+    fetch(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/data.json`)
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();

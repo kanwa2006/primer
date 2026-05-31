@@ -1,5 +1,7 @@
 # PRIMER
 
+[![PRIMER score](https://img.shields.io/endpoint?url=https%3A%2F%2Fkanwa2006.github.io%2Fprimer%2Fscores.json)](https://kanwa2006.github.io/primer/)
+
 > Every context-file tool generates. PRIMER measures.
 
 PRIMER is a **measurement harness** for AI coding agent context files (e.g. `CLAUDE.md`, `AGENTS.md`).
@@ -16,7 +18,7 @@ The delta may be positive, ~0, or negative. PRIMER is designed to *measure*, not
 
 ## Status
 
-MVP in development (Phase 0 — scaffold). Commands are not yet implemented.
+Phases 0–7 implemented. Run `primer eval .` to measure your context file.
 
 ## Usage
 

@@ -76,18 +76,18 @@ export default function Home() {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.2 }}
           >
-            {/* Measurement identity — what was measured, by whom, how */}
-            <MeasurementIdentity data={state.data} />
-
-            {/* Warnings — always first if present */}
+            {/* Warnings — critical integrity flags first */}
             <WarningBanner
               providerMismatch={state.data.provider_mismatch_warning}
               isolationMismatch={state.data.isolation_mismatch_warning}
               flakyTask={state.data.flaky_task_warning}
             />
 
-            {/* Primary verdict */}
+            {/* Primary verdict — the answer */}
             <VerdictHero data={state.data} />
+
+            {/* Measurement identity — what was measured, by whom, how */}
+            <MeasurementIdentity data={state.data} />
 
             {/* Metrics grid */}
             <MetricsGrid data={state.data} />

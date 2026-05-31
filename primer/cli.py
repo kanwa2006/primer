@@ -451,8 +451,20 @@ def export(
         "scores.json",
         help="Output file path for the scores.json badge payload.",
     ),
+    data_output: Optional[str] = typer.Option(
+        None,
+        "--data-output",
+        help=(
+            "Also write full dashboard data JSON to this path "
+            "(e.g. dashboard/public/data.json). "
+            "Omit to skip the dashboard export."
+        ),
+    ),
 ) -> None:
     """Export the latest score report as scores.json (shields.io endpoint badge).
+
+    Phase 7A: writes scores.json with {schemaVersion, label, message, color}.
+    Phase 7B: optionally writes full data.json for the Next.js scorecard dashboard.
 
     Schema (Q5): {schemaVersion, label, message, color}
       - green  if success_delta > 0
@@ -461,12 +473,13 @@ def export(
 
     Intended for CI: write scores.json to the gh-pages branch so a shields.io
     endpoint badge in README.md reflects the latest measured delta.
+    Use --data-output to also export the full report for the dashboard.
     """
     from pathlib import Path as _Path
     from primer.config import Settings
     from primer.errors import ConfigError
     from primer.store.db import init_db, latest_report as _latest
-    from primer.report.export import write_scores_json
+    from primer.report.export import write_scores_json, write_dashboard_json
 
     try:
         config = Settings()
@@ -504,3 +517,13 @@ def export(
         f"[bold]Exported[/bold] {output_path}  "
         f"{color_emoji} {payload['message']}"
     )
+
+    if data_output is not None:
+        data_path = _Path(data_output)
+        try:
+            data_path.parent.mkdir(parents=True, exist_ok=True)
+            write_dashboard_json(score_report, data_path)
+        except Exception as exc:
+            typer.echo(f"Dashboard data export failed: {exc}", err=True)
+            raise typer.Exit(code=1)
+        _console.print(f"[bold]Dashboard data[/bold] → {data_path}")

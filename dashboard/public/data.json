@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "repo_commit": "example000000000",
+  "created_at": "2026-05-31T13:00:00Z",
+  "verdict": "positive",
+  "n_tasks": 5,
+  "runs_per_config": 3,
+  "success_rate_without": 0.4,
+  "success_rate_with": 0.6,
+  "success_delta": 0.2,
+  "success_stddev": 0.05,
+  "success_min": 0.2,
+  "success_max": 0.8,
+  "cost_without": 0.0142,
+  "cost_with": 0.0168,
+  "cost_delta_pct": 18.3,
+  "cost_confidence": "exact",
+  "provider": "anthropic",
+  "model": "claude-sonnet-4-6",
+  "agent_adapter": "claude_code",
+  "base_image": "python:3.11-slim@sha256:example",
+  "network_mode": "proxy-egress",
+  "egress_enforced": true,
+  "provider_mismatch_warning": null,
+  "isolation_mismatch_warning": null,
+  "flaky_task_warning": null,
+  "primer_overhead_usd": 0.0031,
+  "primer_overhead_confidence": "exact",
+  "per_task": [
+    {
+      "task_id": "revert_abc1234_test_calculator",
+      "task_type": "revert_reimplement",
+      "pass_rate_without": 0.0,
+      "pass_rate_with": 1.0,
+      "delta": 1.0,
+      "flip_state": "FAIL_TO_PASS",
+      "runs": 3,
+      "flaky_any": false
+    },
+    {
+      "task_id": "revert_def5678_test_validator",
+      "task_type": "revert_reimplement",
+      "pass_rate_without": 0.33,
+      "pass_rate_with": 1.0,
+      "delta": 0.67,
+      "flip_state": "PASS_TO_PASS",
+      "runs": 3,
+      "flaky_any": true
+    },
+    {
+      "task_id": "stub_samplelib_add",
+      "task_type": "stub_function",
+      "pass_rate_without": 0.0,
+      "pass_rate_with": 0.67,
+      "delta": 0.67,
+      "flip_state": "FAIL_TO_PASS",
+      "runs": 3,
+      "flaky_any": false
+    },
+    {
+      "task_id": "stub_samplelib_divide",
+      "task_type": "stub_function",
+      "pass_rate_without": 1.0,
+      "pass_rate_with": 1.0,
+      "delta": 0.0,
+      "flip_state": "PASS_TO_PASS",
+      "runs": 3,
+      "flaky_any": false
+    },
+    {
+      "task_id": "stub_samplelib_validate_email",
+      "task_type": "stub_function",
+      "pass_rate_without": 0.67,
+      "pass_rate_with": 0.0,
+      "delta": -0.67,
+      "flip_state": "PASS_TO_FAIL",
+      "runs": 3,
+      "flaky_any": false
+    }
+  ]
+}

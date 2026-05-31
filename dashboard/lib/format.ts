@@ -1,0 +1,80 @@
+import type { CostConfidence, VerdictLabel } from "./types";
+
+export function formatPct(value: number, signed = false): string {
+  const pct = (value * 100).toFixed(1);
+  if (signed && value > 0) return `+${pct}%`;
+  return `${pct}%`;
+}
+
+export function formatDelta(delta: number | null): string {
+  if (delta === null) return "N/A";
+  const pp = (delta * 100).toFixed(1);
+  if (delta > 0) return `+${pp} pp`;
+  return `${pp} pp`;
+}
+
+export function formatCost(usd: number, confidence: CostConfidence): string {
+  if (confidence === "free") return "local (no cost)";
+  const prefix = confidence === "estimated" ? "≈ " : "";
+  return `${prefix}$${usd.toFixed(4)}`;
+}
+
+export function formatCostDelta(pct: number | null): string {
+  if (pct === null) return "N/A";
+  const val = pct.toFixed(1);
+  if (pct > 0) return `+${val}%`;
+  return `${val}%`;
+}
+
+export function verdictColor(verdict: VerdictLabel): string {
+  switch (verdict) {
+    case "positive":     return "text-positive";
+    case "negative":     return "text-negative";
+    case "within-noise": return "text-neutral";
+    case "refused":      return "text-refused";
+  }
+}
+
+export function verdictBg(verdict: VerdictLabel): string {
+  switch (verdict) {
+    case "positive":     return "bg-positive/10 border-positive/30";
+    case "negative":     return "bg-negative/10 border-negative/30";
+    case "within-noise": return "bg-neutral/10 border-neutral/30";
+    case "refused":      return "bg-refused/10 border-refused/30";
+  }
+}
+
+export function flipStateColor(state: string): string {
+  switch (state) {
+    case "FAIL_TO_PASS": return "text-positive";
+    case "PASS_TO_FAIL": return "text-negative";
+    case "PASS_TO_PASS": return "text-zinc-400";
+    case "FAIL_TO_FAIL": return "text-zinc-600";
+    default:             return "text-zinc-500";
+  }
+}
+
+export function flipStateBadge(state: string): string {
+  switch (state) {
+    case "FAIL_TO_PASS": return "bg-positive/10 text-positive border-positive/20";
+    case "PASS_TO_FAIL": return "bg-negative/10 text-negative border-negative/20";
+    case "PASS_TO_PASS": return "bg-zinc-800 text-zinc-400 border-zinc-700";
+    case "FAIL_TO_FAIL": return "bg-zinc-900 text-zinc-600 border-zinc-800";
+    default:             return "bg-zinc-800 text-zinc-500 border-zinc-700";
+  }
+}
+
+export function shortenCommit(sha: string): string {
+  return sha.slice(0, 8);
+}
+
+export function formatDate(iso: string): string {
+  try {
+    return new Date(iso).toLocaleString(undefined, {
+      dateStyle: "medium",
+      timeStyle: "short",
+    });
+  } catch {
+    return iso;
+  }
+}

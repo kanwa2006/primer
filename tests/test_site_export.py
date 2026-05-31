@@ -375,3 +375,297 @@ class TestWriteHelpers:
         repo_payload = build_repository_json(_REPO_NAME, None, [], "2025-01-01T00:00:00Z")
         assert write_evaluation_json(eval_payload, tmp_path / "e.json") is eval_payload
         assert write_repository_json(repo_payload, tmp_path / "r.json") is repo_payload
+
+
+# ---------------------------------------------------------------------------
+# P0-T2: CLI integration tests (§4.10 criteria 1, 2, 3, 4, 5, 7)
+# ---------------------------------------------------------------------------
+
+class TestExportSiteOutputCLI:
+    """Integration tests for `primer export --site-output` wiring.
+
+    Persists a ScoreReport via store.save_report, invokes the CLI via CliRunner,
+    then asserts the produced JSON tree satisfies §3.1/§3.2 and §4.10(1)-(5).
+    """
+
+    # ------------------------------------------------------------------
+    # Helpers
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _db_url(tmp_path) -> str:
+        return f"sqlite:///{tmp_path / 'test.db'}"
+
+    @staticmethod
+    def _persist(db_url: str, repo_path: str) -> int:
+        """Insert _REPORT into db_url for repo_path; return assigned id."""
+        from primer.config import Settings
+        from primer.store.db import init_db, save_report
+        from primer.ingest.models import RepoProfile
+
+        config = Settings(database_url=db_url)
+        conn = init_db(config)
+        profile = RepoProfile(repo_commit=_REPORT.repo_commit)
+        rid = save_report(
+            conn=conn, report=_REPORT, tasks=[], runs=[],
+            profile=profile, repo_path=repo_path,
+        )
+        conn.close()
+        return rid
+
+    @staticmethod
+    def _invoke(args: list, db_url: str):
+        from typer.testing import CliRunner
+        from primer.cli import app
+        return CliRunner().invoke(app, args, env={"DATABASE_URL": db_url})
+
+    # ------------------------------------------------------------------
+    # §4.10(1): all three output files are created
+    # ------------------------------------------------------------------
+
+    def test_creates_repository_json(self, tmp_path):
+        db_url = self._db_url(tmp_path)
+        repo_dir = tmp_path / "repo"; repo_dir.mkdir()
+        self._persist(db_url, str(repo_dir))
+        site_dir = tmp_path / "site"
+        result = self._invoke(
+            ["export", "--site-output", str(site_dir),
+             "--output", str(tmp_path / "s.json"), str(repo_dir)],
+            db_url,
+        )
+        assert result.exit_code == 0, result.output
+        assert (site_dir / "repository.json").exists()
+
+    def test_creates_evaluation_json_per_report(self, tmp_path):
+        db_url = self._db_url(tmp_path)
+        repo_dir = tmp_path / "repo"; repo_dir.mkdir()
+        rid = self._persist(db_url, str(repo_dir))
+        site_dir = tmp_path / "site"
+        self._invoke(
+            ["export", "--site-output", str(site_dir),
+             "--output", str(tmp_path / "s.json"), str(repo_dir)],
+            db_url,
+        )
+        assert (site_dir / "evaluations" / f"{rid}.json").exists()
+
+    def test_creates_site_scores_json(self, tmp_path):
+        db_url = self._db_url(tmp_path)
+        repo_dir = tmp_path / "repo"; repo_dir.mkdir()
+        self._persist(db_url, str(repo_dir))
+        site_dir = tmp_path / "site"
+        self._invoke(
+            ["export", "--site-output", str(site_dir),
+             "--output", str(tmp_path / "s.json"), str(repo_dir)],
+            db_url,
+        )
+        assert (site_dir / "scores.json").exists()
+
+    # ------------------------------------------------------------------
+    # §4.10(2): repository.json validates §3.1
+    # ------------------------------------------------------------------
+
+    def test_repository_json_schema_version_2(self, tmp_path):
+        db_url = self._db_url(tmp_path)
+        repo_dir = tmp_path / "repo"; repo_dir.mkdir()
+        self._persist(db_url, str(repo_dir))
+        site_dir = tmp_path / "site"
+        self._invoke(
+            ["export", "--site-output", str(site_dir),
+             "--output", str(tmp_path / "s.json"), str(repo_dir)],
+            db_url,
+        )
+        data = json.loads((site_dir / "repository.json").read_text())
+        assert data["schema_version"] == 2
+        assert data["kind"] == "repository"
+
+    def test_repository_json_evaluation_count_and_ids(self, tmp_path):
+        db_url = self._db_url(tmp_path)
+        repo_dir = tmp_path / "repo"; repo_dir.mkdir()
+        rid = self._persist(db_url, str(repo_dir))
+        site_dir = tmp_path / "site"
+        self._invoke(
+            ["export", "--site-output", str(site_dir),
+             "--output", str(tmp_path / "s.json"), str(repo_dir)],
+            db_url,
+        )
+        data = json.loads((site_dir / "repository.json").read_text())
+        assert data["evaluation_count"] == 1
+        assert data["latest_evaluation_id"] == rid
+        assert len(data["evaluations"]) == 1
+        assert data["evaluations"][0]["id"] == rid
+
+    def test_repository_json_verdict_and_noise(self, tmp_path):
+        db_url = self._db_url(tmp_path)
+        repo_dir = tmp_path / "repo"; repo_dir.mkdir()
+        self._persist(db_url, str(repo_dir))
+        site_dir = tmp_path / "site"
+        self._invoke(
+            ["export", "--site-output", str(site_dir),
+             "--output", str(tmp_path / "s.json"), str(repo_dir)],
+            db_url,
+        )
+        data = json.loads((site_dir / "repository.json").read_text())
+        summary = data["evaluations"][0]
+        from primer.report.export import _compute_verdict
+        expected_verdict = _compute_verdict(
+            _REPORT.success_delta, _REPORT.n_tasks, _REPORT.success_stddev
+        )
+        assert summary["verdict"] == expected_verdict
+        import math
+        expected_noise = max(1 / _REPORT.n_tasks, _REPORT.success_stddev)
+        assert math.isclose(summary["noise_threshold"], expected_noise)
+
+    def test_repository_json_latest_matches_first_eval(self, tmp_path):
+        db_url = self._db_url(tmp_path)
+        repo_dir = tmp_path / "repo"; repo_dir.mkdir()
+        rid = self._persist(db_url, str(repo_dir))
+        site_dir = tmp_path / "site"
+        self._invoke(
+            ["export", "--site-output", str(site_dir),
+             "--output", str(tmp_path / "s.json"), str(repo_dir)],
+            db_url,
+        )
+        data = json.loads((site_dir / "repository.json").read_text())
+        assert data["latest_evaluation_id"] == data["evaluations"][0]["id"]
+        assert data["latest_verdict"] == data["evaluations"][0]["verdict"]
+        assert data["repo"]["latest_commit"] == data["evaluations"][0]["repo_commit"]
+
+    # ------------------------------------------------------------------
+    # §4.10(3): evaluations/<id>.json validates §3.2
+    # ------------------------------------------------------------------
+
+    def test_evaluation_json_schema_version_2_kind_evaluation(self, tmp_path):
+        db_url = self._db_url(tmp_path)
+        repo_dir = tmp_path / "repo"; repo_dir.mkdir()
+        rid = self._persist(db_url, str(repo_dir))
+        site_dir = tmp_path / "site"
+        self._invoke(
+            ["export", "--site-output", str(site_dir),
+             "--output", str(tmp_path / "s.json"), str(repo_dir)],
+            db_url,
+        )
+        data = json.loads((site_dir / "evaluations" / f"{rid}.json").read_text())
+        assert data["schema_version"] == 2
+        assert data["kind"] == "evaluation"
+        assert data["id"] == rid
+
+    def test_evaluation_json_inherits_dashboard_fields(self, tmp_path):
+        db_url = self._db_url(tmp_path)
+        repo_dir = tmp_path / "repo"; repo_dir.mkdir()
+        rid = self._persist(db_url, str(repo_dir))
+        site_dir = tmp_path / "site"
+        self._invoke(
+            ["export", "--site-output", str(site_dir),
+             "--output", str(tmp_path / "s.json"), str(repo_dir)],
+            db_url,
+        )
+        data = json.loads((site_dir / "evaluations" / f"{rid}.json").read_text())
+        for field in ("verdict", "n_tasks", "runs_per_config", "per_task",
+                      "provider", "model", "agent_adapter"):
+            assert field in data, f"missing field: {field}"
+
+    def test_evaluation_json_repo_field(self, tmp_path):
+        db_url = self._db_url(tmp_path)
+        repo_dir = tmp_path / "repo"; repo_dir.mkdir()
+        rid = self._persist(db_url, str(repo_dir))
+        site_dir = tmp_path / "site"
+        self._invoke(
+            ["export", "--site-output", str(site_dir),
+             "--output", str(tmp_path / "s.json"), str(repo_dir)],
+            db_url,
+        )
+        data = json.loads((site_dir / "evaluations" / f"{rid}.json").read_text())
+        assert "repo" in data
+        assert "name" in data["repo"]
+        assert "url" in data["repo"]
+
+    # ------------------------------------------------------------------
+    # §4.10(4): no absolute repo_path in any exported JSON
+    # ------------------------------------------------------------------
+
+    def test_no_abs_path_in_repository_json(self, tmp_path):
+        db_url = self._db_url(tmp_path)
+        repo_dir = tmp_path / "repo"; repo_dir.mkdir()
+        self._persist(db_url, str(repo_dir))
+        site_dir = tmp_path / "site"
+        self._invoke(
+            ["export", "--site-output", str(site_dir),
+             "--output", str(tmp_path / "s.json"), str(repo_dir)],
+            db_url,
+        )
+        content = (site_dir / "repository.json").read_text()
+        assert str(repo_dir) not in content
+
+    def test_no_abs_path_in_evaluation_json(self, tmp_path):
+        db_url = self._db_url(tmp_path)
+        repo_dir = tmp_path / "repo"; repo_dir.mkdir()
+        rid = self._persist(db_url, str(repo_dir))
+        site_dir = tmp_path / "site"
+        self._invoke(
+            ["export", "--site-output", str(site_dir),
+             "--output", str(tmp_path / "s.json"), str(repo_dir)],
+            db_url,
+        )
+        content = (site_dir / "evaluations" / f"{rid}.json").read_text()
+        assert str(repo_dir) not in content
+
+    # ------------------------------------------------------------------
+    # §4.10(5) REGRESSION: existing flags behavior unchanged
+    # ------------------------------------------------------------------
+
+    def test_existing_export_no_site_flags_produces_scores_json(self, tmp_path):
+        db_url = self._db_url(tmp_path)
+        repo_dir = tmp_path / "repo"; repo_dir.mkdir()
+        self._persist(db_url, str(repo_dir))
+        out = tmp_path / "scores.json"
+        result = self._invoke(
+            ["export", "--output", str(out), str(repo_dir)],
+            db_url,
+        )
+        assert result.exit_code == 0, result.output
+        data = json.loads(out.read_text())
+        assert data["schemaVersion"] == 1
+        assert "label" in data and "message" in data and "color" in data
+
+    def test_data_output_still_produces_dashboard_json(self, tmp_path):
+        db_url = self._db_url(tmp_path)
+        repo_dir = tmp_path / "repo"; repo_dir.mkdir()
+        self._persist(db_url, str(repo_dir))
+        out = tmp_path / "scores.json"
+        data_out = tmp_path / "data.json"
+        result = self._invoke(
+            ["export", "--output", str(out),
+             "--data-output", str(data_out), str(repo_dir)],
+            db_url,
+        )
+        assert result.exit_code == 0, result.output
+        assert data_out.exists()
+        data = json.loads(data_out.read_text())
+        assert data["schema_version"] == 1
+        assert "verdict" in data and "per_task" in data
+
+    # ------------------------------------------------------------------
+    # Empty-repo guard: no reports → exit 1
+    # ------------------------------------------------------------------
+
+    def test_no_reports_exits_1(self, tmp_path):
+        db_url = self._db_url(tmp_path)
+        repo_dir = tmp_path / "repo"; repo_dir.mkdir()
+        # Do NOT persist any report — DB will be created empty by init_db
+        result = self._invoke(
+            ["export", "--site-output", str(tmp_path / "site"),
+             "--output", str(tmp_path / "s.json"), str(repo_dir)],
+            db_url,
+        )
+        assert result.exit_code == 1
+
+    # ------------------------------------------------------------------
+    # --help lists new flags
+    # ------------------------------------------------------------------
+
+    def test_help_lists_site_output(self):
+        result = self._invoke(["export", "--help"], "sqlite:///primer.db")
+        assert result.exit_code == 0
+        assert "--site-output" in result.output
+        assert "--repo-name" in result.output
+        assert "--repo-url" in result.output

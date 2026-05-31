@@ -460,6 +460,24 @@ def export(
             "Omit to skip the dashboard export."
         ),
     ),
+    site_output: Optional[str] = typer.Option(
+        None,
+        "--site-output",
+        help=(
+            "Write the full site JSON tree (repository.json, evaluations/<id>.json, "
+            "scores.json) to this directory (e.g. dashboard/public)."
+        ),
+    ),
+    repo_name: Optional[str] = typer.Option(
+        None,
+        "--repo-name",
+        help="Repository display name for site export (default: directory name).",
+    ),
+    repo_url: Optional[str] = typer.Option(
+        None,
+        "--repo-url",
+        help="Optional repository URL for site export.",
+    ),
 ) -> None:
     """Export the latest score report as scores.json (shields.io endpoint badge).
 
@@ -475,11 +493,16 @@ def export(
     endpoint badge in README.md reflects the latest measured delta.
     Use --data-output to also export the full report for the dashboard.
     """
+    from datetime import datetime, timezone
     from pathlib import Path as _Path
     from primer.config import Settings
     from primer.errors import ConfigError
-    from primer.store.db import init_db, latest_report as _latest
-    from primer.report.export import write_scores_json, write_dashboard_json
+    from primer.store.db import init_db, latest_report as _latest, list_reports, get_report_by_id
+    from primer.report.export import (
+        write_scores_json, write_dashboard_json,
+        build_evaluation_json, write_evaluation_json,
+        build_repository_json, write_repository_json,
+    )
 
     try:
         config = Settings()
@@ -493,7 +516,27 @@ def export(
     try:
         conn = init_db(config)
         score_report = _latest(conn, repo_path)
+
+        # Site-output: read all reports for this repo while conn is open
+        site_items = None
+        if site_output is not None:
+            rows = list_reports(conn, repo_path=repo_path, limit=10_000)
+            if not rows:
+                conn.close()
+                typer.echo(
+                    f"No reports for {repo_path}. Run 'primer eval .' first.",
+                    err=True,
+                )
+                raise typer.Exit(code=1)
+            site_items = []
+            for r in rows:
+                rep = get_report_by_id(conn, r["id"])
+                if rep is not None:
+                    site_items.append((r["id"], rep))
+
         conn.close()
+    except typer.Exit:
+        raise
     except Exception as exc:
         typer.echo(f"Database error: {exc}", err=True)
         raise typer.Exit(code=1)
@@ -527,3 +570,25 @@ def export(
             typer.echo(f"Dashboard data export failed: {exc}", err=True)
             raise typer.Exit(code=1)
         _console.print(f"[bold]Dashboard data[/bold] → {data_path}")
+
+    if site_output is not None and site_items:
+        _site_dir = _Path(site_output)
+        _site_repo_name = repo_name or _Path(repo_path).name
+        _now_iso = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        try:
+            for _id, _rep in site_items:
+                write_evaluation_json(
+                    build_evaluation_json(_id, _rep, _site_repo_name, repo_url),
+                    _site_dir / "evaluations" / f"{_id}.json",
+                )
+            write_repository_json(
+                build_repository_json(_site_repo_name, repo_url, site_items, _now_iso),
+                _site_dir / "repository.json",
+            )
+            write_scores_json(site_items[0][1], _site_dir / "scores.json")
+        except Exception as exc:
+            typer.echo(f"Site export failed: {exc}", err=True)
+            raise typer.Exit(code=1)
+        _console.print(
+            f"[bold]Site export[/bold] {len(site_items)} report(s) → {_site_dir}"
+        )

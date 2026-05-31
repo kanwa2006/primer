@@ -1,6 +1,6 @@
-"""PRIMER CLI -- composition root (Phase 4 + Phase 6).
+"""PRIMER CLI -- composition root (Phase 4 + Phase 6 + Phase 7A).
 
-Commands: init, eval, report, history, compare.
+Commands: init, eval, report, history, compare, export.
 This is the ONLY orchestrator -- no other module imports cli.py.
 
 Security invariant: no API key value ever appears in logs/output.
@@ -437,4 +437,70 @@ def compare(
         id_a=report_a,
         id_b=report_b,
         console=_console,
+    )
+
+
+# ---------------------------------------------------------------------------
+# export  (Phase 7A)
+# ---------------------------------------------------------------------------
+
+@app.command()
+def export(
+    path: str = typer.Argument(".", help="Path to the repository root."),
+    output: str = typer.Option(
+        "scores.json",
+        help="Output file path for the scores.json badge payload.",
+    ),
+) -> None:
+    """Export the latest score report as scores.json (shields.io endpoint badge).
+
+    Schema (Q5): {schemaVersion, label, message, color}
+      - green  if success_delta > 0
+      - yellow if success_delta == 0 or refused (None)
+      - red    if success_delta < 0
+
+    Intended for CI: write scores.json to the gh-pages branch so a shields.io
+    endpoint badge in README.md reflects the latest measured delta.
+    """
+    from pathlib import Path as _Path
+    from primer.config import Settings
+    from primer.errors import ConfigError
+    from primer.store.db import init_db, latest_report as _latest
+    from primer.report.export import write_scores_json
+
+    try:
+        config = Settings()
+    except ConfigError as exc:
+        typer.echo(f"Configuration error: {exc}", err=True)
+        raise typer.Exit(code=1)
+
+    repo_path = str(_Path(path).resolve())
+    output_path = _Path(output)
+
+    try:
+        conn = init_db(config)
+        score_report = _latest(conn, repo_path)
+        conn.close()
+    except Exception as exc:
+        typer.echo(f"Database error: {exc}", err=True)
+        raise typer.Exit(code=1)
+
+    if score_report is None:
+        typer.echo(
+            f"No report found for {repo_path}. "
+            "Run 'primer eval .' first.",
+            err=True,
+        )
+        raise typer.Exit(code=1)
+
+    try:
+        payload = write_scores_json(score_report, output_path)
+    except Exception as exc:
+        typer.echo(f"Export failed: {exc}", err=True)
+        raise typer.Exit(code=1)
+
+    color_emoji = {"green": "🟢", "yellow": "🟡", "red": "🔴"}.get(payload["color"], "⚪")
+    _console.print(
+        f"[bold]Exported[/bold] {output_path}  "
+        f"{color_emoji} {payload['message']}"
     )

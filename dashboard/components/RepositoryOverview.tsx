@@ -1,0 +1,61 @@
+"use client";
+
+import { EmptyState } from "@/components/EmptyState";
+import { EvaluationLedger } from "@/components/EvaluationLedger";
+import { formatDelta, shortenCommit, verdictColor } from "@/lib/format";
+import type { RepositoryData } from "@/lib/types";
+
+export function RepositoryOverview({ data }: { data: RepositoryData }) {
+  if (data.evaluation_count === 0) return <EmptyState />;
+
+  const latestEval = data.evaluations[0] ?? null;
+
+  return (
+    <div className="flex flex-col gap-10">
+      {/* Repository identity */}
+      <div>
+        <div className="flex items-baseline gap-3">
+          <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">
+            {data.repo.name}
+          </h1>
+          {data.repo.url && (
+            <a
+              href={data.repo.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-zinc-400 hover:text-zinc-600 transition-colors"
+            >
+              ↗
+            </a>
+          )}
+        </div>
+
+        <div className="mt-1 text-xs font-mono text-zinc-400">
+          {shortenCommit(data.repo.latest_commit)}
+        </div>
+
+        {data.latest_verdict && latestEval && (
+          <div className="mt-2 text-sm">
+            <span className="text-zinc-500">Latest result: </span>
+            <span className={`font-medium ${verdictColor(data.latest_verdict)}`}>
+              {data.latest_verdict}
+            </span>
+            {latestEval.success_delta !== null && (
+              <span className="text-zinc-500 ml-2">
+                {formatDelta(latestEval.success_delta)}
+              </span>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Evaluation ledger */}
+      <div>
+        <h2 className="text-xs font-mono uppercase tracking-widest text-zinc-400 mb-4">
+          Evaluations
+        </h2>
+        <EvaluationLedger evaluations={data.evaluations} />
+      </div>
+    </div>
+  );
+}

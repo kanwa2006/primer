@@ -14,15 +14,23 @@ export default function SiteHeader() {
           <span className="text-zinc-500 text-xs font-mono">scorecard</span>
         </div>
 
-        <a
-          href="https://github.com/kanwa2006/primer"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-zinc-500 hover:text-zinc-700 text-xs font-mono transition-colors duration-150"
-          aria-label="PRIMER on GitHub"
-        >
-          GitHub
-        </a>
+        <nav className="flex items-center gap-4">
+          <Link
+            href="/compare/"
+            className="text-zinc-500 hover:text-zinc-700 text-xs font-mono transition-colors duration-150"
+          >
+            Compare
+          </Link>
+          <a
+            href="https://github.com/kanwa2006/primer"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-zinc-500 hover:text-zinc-700 text-xs font-mono transition-colors duration-150"
+            aria-label="PRIMER on GitHub"
+          >
+            GitHub
+          </a>
+        </nav>
       </div>
     </header>
   );

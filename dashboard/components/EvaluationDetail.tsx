@@ -16,7 +16,7 @@ interface Props {
   prevId: number | null;
 }
 
-export function EvaluationDetail({ data, prevId: _prevId }: Props) {
+export function EvaluationDetail({ data, prevId }: Props) {
   return (
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between">
@@ -26,7 +26,14 @@ export function EvaluationDetail({ data, prevId: _prevId }: Props) {
         >
           ← All evaluations
         </Link>
-        {/* P2: Compare affordance placeholder — wired in P2 */}
+        {prevId !== null && (
+          <Link
+            href={`/compare/?a=${prevId}&b=${data.id}`}
+            className="text-xs font-mono text-zinc-500 hover:text-zinc-700 transition-colors duration-150"
+          >
+            Compare with previous evaluation →
+          </Link>
+        )}
       </div>
 
       <motion.div

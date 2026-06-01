@@ -36,12 +36,14 @@ export function EvaluationLedger({
             <th scope="col" className="pb-2 text-xs font-mono uppercase tracking-widest text-zinc-400 font-medium">
               Egress
             </th>
+            <th scope="col" className="pb-2 text-xs font-mono uppercase tracking-widest text-zinc-400 font-medium" />
           </tr>
         </thead>
         <tbody>
-          {evaluations.map((ev) => {
+          {evaluations.map((ev, i) => {
             const withinNoise = ev.verdict === "within-noise";
             const noiseEnvelope = `± ${(ev.noise_threshold * 100).toFixed(1)} pp`;
+            const olderSibling = evaluations[i + 1] ?? null;
             return (
               <tr
                 key={ev.id}
@@ -79,6 +81,16 @@ export function EvaluationLedger({
                     <span className="text-xs font-mono text-positive">enforced</span>
                   ) : (
                     <span className="text-xs font-mono text-zinc-400">open</span>
+                  )}
+                </td>
+                <td className="py-3 pl-2">
+                  {olderSibling && (
+                    <Link
+                      href={`/compare/?a=${olderSibling.id}&b=${ev.id}`}
+                      className="text-xs font-mono text-zinc-400 hover:text-zinc-600 transition-colors"
+                    >
+                      compare ↗
+                    </Link>
                   )}
                 </td>
               </tr>

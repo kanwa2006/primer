@@ -1,0 +1,30 @@
+{
+  "schema_version": 2,
+  "kind": "repository",
+  "repo": {
+    "name": "primer",
+    "url": null,
+    "latest_commit": "example000000000"
+  },
+  "latest_evaluation_id": 1,
+  "latest_verdict": "positive",
+  "evaluation_count": 1,
+  "evaluations": [
+    {
+      "id": 1,
+      "repo_commit": "example000000000",
+      "created_at": "2026-05-31T13:00:00Z",
+      "verdict": "positive",
+      "success_delta": 0.2,
+      "success_stddev": 0.05,
+      "n_tasks": 5,
+      "runs_per_config": 3,
+      "noise_threshold": 0.2,
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-6",
+      "agent_adapter": "claude_code",
+      "egress_enforced": true
+    }
+  ],
+  "generated_at": "2026-05-31T13:00:00Z"
+}

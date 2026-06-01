@@ -1,0 +1,65 @@
+"use client";
+
+import Link from "next/link";
+import { motion } from "motion/react";
+import { WarningBanner } from "@/components/WarningBanner";
+import { VerdictHero } from "@/components/VerdictHero";
+import { MeasurementIdentity } from "@/components/MeasurementIdentity";
+import { TrustArchitecture } from "@/components/TrustArchitecture";
+import { MetricsGrid } from "@/components/MetricsGrid";
+import { TaskFlipTable } from "@/components/TaskFlipTable";
+import { ProvenanceFooter } from "@/components/ProvenanceFooter";
+import type { DashboardData } from "@/lib/types";
+
+interface Props {
+  data: DashboardData;
+  prevId: number | null;
+}
+
+export function EvaluationDetail({ data, prevId: _prevId }: Props) {
+  return (
+    <div className="flex flex-col gap-8">
+      <div className="flex items-center justify-between">
+        <Link
+          href="/"
+          className="text-xs font-mono text-zinc-500 hover:text-zinc-700 transition-colors duration-150"
+        >
+          ← All evaluations
+        </Link>
+        {/* P2: Compare affordance placeholder — wired in P2 */}
+      </div>
+
+      <motion.div
+        className="flex flex-col gap-12"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.2 }}
+      >
+        {/* Warnings — critical integrity flags first */}
+        <WarningBanner
+          providerMismatch={data.provider_mismatch_warning}
+          isolationMismatch={data.isolation_mismatch_warning}
+          flakyTask={data.flaky_task_warning}
+        />
+
+        {/* Primary verdict — the answer */}
+        <VerdictHero data={data} />
+
+        {/* Measurement identity — what was measured, by whom, how */}
+        <MeasurementIdentity data={data} />
+
+        {/* Trust architecture — why the result is credible */}
+        <TrustArchitecture data={data} />
+
+        {/* Metrics grid */}
+        <MetricsGrid data={data} />
+
+        {/* Per-task flip table */}
+        <TaskFlipTable tasks={data.per_task} />
+
+        {/* Provenance */}
+        <ProvenanceFooter data={data} />
+      </motion.div>
+    </div>
+  );
+}

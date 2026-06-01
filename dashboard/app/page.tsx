@@ -39,24 +39,6 @@ export default function Home() {
 
   return (
     <div className="min-h-[100dvh] bg-white">
-      {/* Nav bar */}
-      <header className="border-b border-zinc-200 sticky top-0 z-10 bg-white/95 backdrop-blur-sm">
-        <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <span className="font-mono text-sm font-semibold text-zinc-900 tracking-tight">
-              PRIMER
-            </span>
-            <span className="text-zinc-500 text-xs font-mono">scorecard</span>
-          </div>
-
-          {state.status === "ok" && (
-            <span className="text-zinc-500 text-xs font-mono hidden sm:block">
-              {state.data.repo_commit.slice(0, 8)}
-            </span>
-          )}
-        </div>
-      </header>
-
       <main className="max-w-5xl mx-auto px-6 py-10">
         {state.status === "loading" && (
           <div className="flex items-center justify-center min-h-[60vh]">
@@ -105,22 +87,6 @@ export default function Home() {
         )}
       </main>
 
-      <footer className="border-t border-zinc-200 mt-16">
-        <div className="max-w-5xl mx-auto px-6 py-6 flex items-center justify-between">
-          <span className="text-zinc-500 text-xs font-mono">
-            PRIMER — Every context-file tool generates. PRIMER measures.
-          </span>
-          <a
-            href="https://github.com/kanwa2006/primer"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-zinc-500 hover:text-zinc-700 text-xs font-mono transition-colors duration-150"
-            aria-label="PRIMER on GitHub"
-          >
-            GitHub
-          </a>
-        </div>
-      </footer>
     </div>
   );
 }

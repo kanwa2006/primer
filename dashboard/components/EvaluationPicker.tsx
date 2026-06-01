@@ -76,12 +76,14 @@ function PickerSelect({
   value: number | null;
   onChange: (v: string) => void;
 }) {
+  const selectId = label.toLowerCase().replace(/\s+/g, "-");
   return (
     <div className="flex flex-col gap-2">
-      <label className="text-xs font-mono text-zinc-500 uppercase tracking-widest">
+      <label htmlFor={selectId} className="text-xs font-mono text-zinc-500 uppercase tracking-widest">
         {label}
       </label>
       <select
+        id={selectId}
         className="border border-zinc-200 rounded px-3 py-2 text-xs font-mono text-zinc-700 bg-white focus:outline-none focus:ring-2 focus:ring-zinc-300 cursor-pointer"
         value={value ?? ""}
         onChange={(e) => onChange(e.target.value)}

@@ -89,7 +89,7 @@ export function EvaluationLedger({
                       href={`/compare/?a=${olderSibling.id}&b=${ev.id}`}
                       className="text-xs font-mono text-zinc-400 hover:text-zinc-600 transition-colors"
                     >
-                      compare ↗
+                      compare →
                     </Link>
                   )}
                 </td>

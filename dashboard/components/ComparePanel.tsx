@@ -60,7 +60,7 @@ export function ComparePanel({ a, b }: Props) {
           Provenance diff
         </div>
         <div className="overflow-x-auto border border-zinc-200 rounded-lg">
-          <table className="w-full text-sm" role="table">
+          <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-zinc-200 bg-zinc-50">
                 <th className="py-2 px-4 text-left text-xs font-mono text-zinc-500 uppercase tracking-widest w-36">

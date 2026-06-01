@@ -18,22 +18,22 @@ export function EvaluationLedger({
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full text-sm">
+      <table className="w-full text-sm" aria-label="Evaluation history">
         <thead>
           <tr className="text-left border-b border-zinc-200">
-            <th className="pb-2 pr-6 text-xs font-mono uppercase tracking-widest text-zinc-400 font-medium">
+            <th scope="col" className="pb-2 pr-6 text-xs font-mono uppercase tracking-widest text-zinc-400 font-medium">
               Commit
             </th>
-            <th className="pb-2 pr-6 text-xs font-mono uppercase tracking-widest text-zinc-400 font-medium">
+            <th scope="col" className="pb-2 pr-6 text-xs font-mono uppercase tracking-widest text-zinc-400 font-medium">
               Date
             </th>
-            <th className="pb-2 pr-6 text-xs font-mono uppercase tracking-widest text-zinc-400 font-medium">
+            <th scope="col" className="pb-2 pr-6 text-xs font-mono uppercase tracking-widest text-zinc-400 font-medium">
               Verdict
             </th>
-            <th className="pb-2 pr-6 text-xs font-mono uppercase tracking-widest text-zinc-400 font-medium">
+            <th scope="col" className="pb-2 pr-6 text-xs font-mono uppercase tracking-widest text-zinc-400 font-medium">
               Delta
             </th>
-            <th className="pb-2 text-xs font-mono uppercase tracking-widest text-zinc-400 font-medium">
+            <th scope="col" className="pb-2 text-xs font-mono uppercase tracking-widest text-zinc-400 font-medium">
               Egress
             </th>
           </tr>

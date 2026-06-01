@@ -23,7 +23,8 @@ export function RepositoryOverview({ data }: { data: RepositoryData }) {
               href={data.repo.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-sm text-zinc-400 hover:text-zinc-600 transition-colors"
+              aria-label={`View ${data.repo.name} on external site`}
+              className="text-sm text-zinc-500 hover:text-zinc-700 transition-colors"
             >
               ↗
             </a>

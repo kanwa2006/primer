@@ -18,6 +18,8 @@ build/
 dashboard/node_modules/
 dashboard/.next/
 dashboard/out/
+dashboard/*.tsbuildinfo
 
 # Misc
 .DS_Store
+skills-audit.txt

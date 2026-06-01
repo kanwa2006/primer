@@ -22,12 +22,12 @@ export function ComparePanel({ a, b }: Props) {
 
       {result.isolation_mismatch && (
         <div className="flex items-start gap-3 px-4 py-3 rounded border border-amber-500/20 bg-amber-500/5" role="alert">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="text-amber-400 mt-0.5 shrink-0">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="text-amber-600 mt-0.5 shrink-0">
             <path d="M8 2L14.5 13H1.5L8 2Z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
             <line x1="8" y1="7" x2="8" y2="10" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
             <circle cx="8" cy="11.5" r="0.6" fill="currentColor" />
           </svg>
-          <p className="text-amber-300 text-xs leading-relaxed font-mono">
+          <p className="text-amber-700 text-xs leading-relaxed font-mono">
             Isolation mismatch: base image, network mode, or egress enforcement differ. Results may not be directly comparable.
           </p>
         </div>

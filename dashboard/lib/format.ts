@@ -28,9 +28,9 @@ export function formatCostDelta(pct: number | null): string {
 
 export function verdictColor(verdict: VerdictLabel): string {
   switch (verdict) {
-    case "positive":     return "text-positive";
-    case "negative":     return "text-negative";
-    case "within-noise": return "text-neutral";
+    case "positive":     return "text-emerald-700";
+    case "negative":     return "text-red-700";
+    case "within-noise": return "text-within-noise";
     case "refused":      return "text-refused";
   }
 }
@@ -39,7 +39,7 @@ export function verdictBg(verdict: VerdictLabel): string {
   switch (verdict) {
     case "positive":     return "bg-positive/10 border-positive/30";
     case "negative":     return "bg-negative/10 border-negative/30";
-    case "within-noise": return "bg-neutral/10 border-neutral/30";
+    case "within-noise": return "bg-within-noise/10 border-within-noise/30";
     case "refused":      return "bg-refused/10 border-refused/30";
   }
 }
@@ -56,11 +56,11 @@ export function flipStateColor(state: string): string {
 
 export function flipStateBadge(state: string): string {
   switch (state) {
-    case "FAIL_TO_PASS": return "bg-positive/10 text-positive border-positive/20";
-    case "PASS_TO_FAIL": return "bg-negative/10 text-negative border-negative/20";
-    case "PASS_TO_PASS": return "bg-zinc-800 text-zinc-400 border-zinc-700";
-    case "FAIL_TO_FAIL": return "bg-zinc-900 text-zinc-600 border-zinc-800";
-    default:             return "bg-zinc-800 text-zinc-500 border-zinc-700";
+    case "FAIL_TO_PASS": return "bg-positive/10 text-emerald-700 border-positive/30";
+    case "PASS_TO_FAIL": return "bg-negative/10 text-red-700 border-negative/30";
+    case "PASS_TO_PASS": return "bg-zinc-100 text-zinc-600 border-zinc-200";
+    case "FAIL_TO_FAIL": return "bg-zinc-100 text-zinc-600 border-zinc-200";
+    default:             return "bg-zinc-100 text-zinc-600 border-zinc-200";
   }
 }
 

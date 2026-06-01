@@ -15,8 +15,8 @@ const config: Config = {
       colors: {
         positive: "#34d399",   // emerald-400
         negative: "#f87171",   // red-400
-        neutral:  "#fbbf24",   // amber-400
-        refused:  "#a1a1aa",   // zinc-400
+        "within-noise": "#475569", // slate-600 — calm blue-gray (off amber); AA 7.3:1 on #fafafa
+        refused:  "#71717a",   // zinc-500 — muted/desaturated; AA 4.63:1 on #fafafa
       },
       animation: {
         "fade-in": "fadeIn 0.3s ease forwards",

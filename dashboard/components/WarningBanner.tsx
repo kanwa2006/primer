@@ -17,7 +17,7 @@ function SingleWarning({ message }: { message: string }) {
         viewBox="0 0 16 16"
         fill="none"
         aria-hidden="true"
-        className="text-amber-400 mt-0.5 shrink-0"
+        className="text-amber-600 mt-0.5 shrink-0"
       >
         <path
           d="M8 2L14.5 13H1.5L8 2Z"
@@ -28,7 +28,7 @@ function SingleWarning({ message }: { message: string }) {
         <line x1="8" y1="7" x2="8" y2="10" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
         <circle cx="8" cy="11.5" r="0.6" fill="currentColor" />
       </svg>
-      <p className="text-amber-300 text-xs leading-relaxed font-mono">{message}</p>
+      <p className="text-amber-700 text-xs leading-relaxed font-mono">{message}</p>
     </div>
   );
 }

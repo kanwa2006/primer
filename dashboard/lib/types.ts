@@ -24,6 +24,10 @@ export interface DashboardData {
   // schema
   schema_version: number;
 
+  // V2 identity fields (injected by build_evaluation_json)
+  id: number;
+  repo: { name: string; url: string | null };
+
   // report identity
   repo_commit: string;
   created_at: string;
@@ -66,4 +70,50 @@ export interface DashboardData {
 
   // per-task breakdown
   per_task: TaskData[];
+}
+
+// §3.1 — one entry per reports row in repository.json evaluations[]
+export interface EvaluationSummary {
+  id: number;
+  repo_commit: string;
+  created_at: string;
+  verdict: VerdictLabel;
+  success_delta: number | null;
+  success_stddev: number;
+  n_tasks: number;
+  runs_per_config: number;
+  noise_threshold: number;
+  provider: string;
+  model: string;
+  agent_adapter: string;
+  egress_enforced: boolean;
+}
+
+// §3.1 — repository.json top-level shape
+export interface RepositoryData {
+  schema_version: number;
+  kind: string;
+  repo: { name: string; url: string | null; latest_commit: string };
+  latest_evaluation_id: number | null;
+  latest_verdict: VerdictLabel | null;
+  evaluation_count: number;
+  evaluations: EvaluationSummary[];
+  generated_at: string;
+}
+
+// §3.5 — one provenance field row in ComparisonResult.fields
+export interface DiffRow {
+  label: string;
+  a: string;
+  b: string;
+  differ: boolean;
+}
+
+// §3.5 — output of computeComparison(); mirrors render_compare (render.py) exactly
+export interface ComparisonResult {
+  provider_mismatch: boolean;
+  isolation_mismatch: boolean;
+  refused: boolean;
+  cross_report_delta: number | null;
+  fields: DiffRow[];
 }

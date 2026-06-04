@@ -23,22 +23,22 @@ export function EvaluationLedger({
       <table className="w-full text-sm" aria-label="Evaluation history">
         <thead>
           <tr className="text-left border-b border-zinc-200">
-            <th scope="col" className="pb-2 pr-6 text-xs font-mono uppercase tracking-widest text-zinc-400 font-medium">
+            <th scope="col" className="pb-2 pr-6 text-xs font-mono uppercase tracking-widest text-zinc-500 font-medium">
               Commit
             </th>
-            <th scope="col" className="pb-2 pr-6 text-xs font-mono uppercase tracking-widest text-zinc-400 font-medium">
+            <th scope="col" className="pb-2 pr-6 text-xs font-mono uppercase tracking-widest text-zinc-500 font-medium">
               Date
             </th>
-            <th scope="col" className="pb-2 pr-6 text-xs font-mono uppercase tracking-widest text-zinc-400 font-medium">
+            <th scope="col" className="pb-2 pr-6 text-xs font-mono uppercase tracking-widest text-zinc-500 font-medium">
               Verdict
             </th>
-            <th scope="col" className="pb-2 pr-6 text-xs font-mono uppercase tracking-widest text-zinc-400 font-medium">
+            <th scope="col" className="pb-2 pr-6 text-xs font-mono uppercase tracking-widest text-zinc-500 font-medium">
               Delta
             </th>
-            <th scope="col" className="pb-2 text-xs font-mono uppercase tracking-widest text-zinc-400 font-medium">
+            <th scope="col" className="pb-2 text-xs font-mono uppercase tracking-widest text-zinc-500 font-medium">
               Egress
             </th>
-            <th scope="col" className="pb-2 text-xs font-mono uppercase tracking-widest text-zinc-400 font-medium" />
+            <th scope="col" className="pb-2 text-xs font-mono uppercase tracking-widest text-zinc-500 font-medium" />
           </tr>
         </thead>
         <tbody>
@@ -71,9 +71,9 @@ export function EvaluationLedger({
                   <span className="text-xs text-zinc-700">
                     {formatDelta(ev.success_delta)}
                   </span>
-                  <span className="text-xs text-zinc-400 ml-1.5">{noiseEnvelope}</span>
+                  <span className="text-xs text-zinc-500 ml-1.5">{noiseEnvelope}</span>
                   {withinNoise && (
-                    <span className="ml-2 text-xs font-mono text-zinc-400">
+                    <span className="ml-2 text-xs font-mono text-zinc-500">
                       within noise
                     </span>
                   )}
@@ -82,14 +82,14 @@ export function EvaluationLedger({
                   {ev.egress_enforced ? (
                     <span className="text-xs font-mono text-emerald-700">enforced</span>
                   ) : (
-                    <span className="text-xs font-mono text-zinc-400">open</span>
+                    <span className="text-xs font-mono text-zinc-500">open</span>
                   )}
                 </td>
                 <td className="py-3 pl-2">
                   {olderSibling && (
                     <Link
                       href={`/compare/?a=${olderSibling.id}&b=${ev.id}`}
-                      className="text-xs font-mono text-zinc-400 hover:text-zinc-600 transition-colors"
+                      className="text-xs font-mono text-zinc-500 hover:text-zinc-700 transition-colors"
                     >
                       compare →
                     </Link>

@@ -59,7 +59,7 @@ export function ComparePanel({ a, b }: Props) {
               </span>
               <span className="text-xs font-mono text-zinc-500">B − A success delta</span>
             </div>
-            <p className="text-xs font-mono text-zinc-400 leading-relaxed max-w-[70ch]">
+            <p className="text-xs font-mono text-zinc-500 leading-relaxed max-w-[70ch]">
               Interpret against each evaluation&apos;s noise envelope — A ± {(noiseThreshold(a) * 100).toFixed(1)} pp, B ± {(noiseThreshold(b) * 100).toFixed(1)} pp. A cross-evaluation delta smaller than these bands is not a reliable difference.
             </p>
           </div>
@@ -111,12 +111,12 @@ export function ComparePanel({ a, b }: Props) {
                   key={row.label}
                   className={`border-b border-zinc-100 last:border-0 ${row.differ ? "bg-amber-50" : ""}`}
                 >
-                  <td className="py-2 px-4 text-xs font-mono text-zinc-400">{row.label}</td>
+                  <td className="py-2 px-4 text-xs font-mono text-zinc-500">{row.label}</td>
                   <td className={`py-2 px-4 text-xs font-mono ${row.differ ? "text-amber-700 font-semibold" : "text-zinc-700"}`}>
-                    {row.a || <span className="text-zinc-400">—</span>}
+                    {row.a || <span className="text-zinc-500">—</span>}
                   </td>
                   <td className={`py-2 px-4 text-xs font-mono ${row.differ ? "text-amber-700 font-semibold" : "text-zinc-700"}`}>
-                    {row.b || <span className="text-zinc-400">—</span>}
+                    {row.b || <span className="text-zinc-500">—</span>}
                   </td>
                 </tr>
               ))}
@@ -148,7 +148,7 @@ export function ComparePanel({ a, b }: Props) {
 function EvalHeadline({ label, data }: { label: string; data: DashboardData }) {
   return (
     <div className="border border-zinc-200 rounded-lg p-5 flex flex-col gap-3">
-      <div className="text-zinc-400 text-xs font-mono uppercase tracking-widest">{label}</div>
+      <div className="text-zinc-500 text-xs font-mono uppercase tracking-widest">{label}</div>
       <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
         <span className="text-lg font-mono font-semibold text-zinc-900">
           {formatPct(data.success_rate_with)}
@@ -166,7 +166,7 @@ function EvalHeadline({ label, data }: { label: string; data: DashboardData }) {
           <span aria-hidden="true">{verdictIcon(data.verdict)}</span> {verdictWord(data.verdict)}
         </span>
       </div>
-      <div className="text-xs font-mono text-zinc-400">
+      <div className="text-xs font-mono text-zinc-500">
         {data.model} · {data.provider}
       </div>
       <div className="text-xs font-mono text-zinc-500">

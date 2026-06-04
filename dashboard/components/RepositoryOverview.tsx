@@ -10,6 +10,29 @@ export function RepositoryOverview({ data }: { data: RepositoryData }) {
 
   const latestEval = data.evaluations[0] ?? null;
 
+  // History-as-stability read + condition-change flags (§10).
+  const evals = data.evaluations;
+  const n = evals.length;
+  const sameProviderModel =
+    new Set(evals.map((e) => `${e.provider}/${e.model}`)).size === 1;
+  const sameIsolation =
+    new Set(evals.map((e) => String(e.egress_enforced))).size === 1;
+  const allWithinNoise = n > 0 && evals.every((e) => e.verdict === "within-noise");
+  const conditionFlags: string[] = [];
+  if (n >= 2 && !sameProviderModel)
+    conditionFlags.push(
+      "Provider or model changed across history — verdicts are not directly comparable."
+    );
+  if (n >= 2 && !sameIsolation)
+    conditionFlags.push(
+      "Egress-enforcement setting changed across history — isolation was not held constant."
+    );
+  const stabilityRead = allWithinNoise
+    ? `Within noise across ${n} evaluations${sameProviderModel ? ` under ${evals[0].model}` : ""} — no measurable effect detected so far.`
+    : sameProviderModel
+      ? `${n} evaluations under ${evals[0].model}.`
+      : `${n} evaluations across changing conditions.`;
+
   return (
     <div className="flex flex-col gap-10">
       {/* Repository identity */}
@@ -65,10 +88,19 @@ export function RepositoryOverview({ data }: { data: RepositoryData }) {
         <h2 className="text-xs font-mono uppercase tracking-widest text-zinc-400 mb-4">
           Evaluations
         </h2>
-        {data.evaluation_count === 1 && (
+        {data.evaluation_count === 1 ? (
           <p className="text-xs font-mono text-zinc-400 mb-3 max-w-[60ch] leading-relaxed">
             This is the first evaluation for this repo. History appears once you run PRIMER again.
           </p>
+        ) : (
+          <div className="mb-4 flex flex-col gap-1.5 max-w-[72ch]">
+            <p className="text-sm text-zinc-700 leading-relaxed">{stabilityRead}</p>
+            {conditionFlags.map((f) => (
+              <p key={f} className="text-xs font-mono text-amber-700 leading-relaxed">
+                ⚠ {f}
+              </p>
+            ))}
+          </div>
         )}
         <EvaluationLedger evaluations={data.evaluations} />
       </div>

@@ -35,6 +35,9 @@ export function EvaluationPicker({ evaluations, a, b }: Props) {
     );
   }
 
+  const selectedA = a !== null ? evaluations.find((e) => e.id === a) ?? null : null;
+  const selectedB = b !== null ? evaluations.find((e) => e.id === b) ?? null : null;
+
   return (
     <div className="flex flex-col gap-6">
       <div className="text-zinc-500 text-xs font-mono uppercase tracking-widest">
@@ -45,12 +48,14 @@ export function EvaluationPicker({ evaluations, a, b }: Props) {
           label="Baseline A"
           evaluations={evaluations}
           value={a}
+          incompatibleWith={selectedB}
           onChange={(v) => handleChange("a", v)}
         />
         <PickerSelect
           label="New B"
           evaluations={evaluations}
           value={b}
+          incompatibleWith={selectedA}
           onChange={(v) => handleChange("b", v)}
         />
       </div>
@@ -69,14 +74,21 @@ function PickerSelect({
   label,
   evaluations,
   value,
+  incompatibleWith,
   onChange,
 }: {
   label: string;
   evaluations: EvaluationSummary[];
   value: number | null;
+  incompatibleWith: EvaluationSummary | null;
   onChange: (v: string) => void;
 }) {
   const selectId = label.toLowerCase().replace(/\s+/g, "-");
+  const isIncompatible = (ev: EvaluationSummary) =>
+    incompatibleWith != null &&
+    ev.id !== incompatibleWith.id &&
+    (ev.provider !== incompatibleWith.provider || ev.model !== incompatibleWith.model);
+  const anyDisabled = evaluations.some(isIncompatible);
   return (
     <div className="flex flex-col gap-2">
       <label htmlFor={selectId} className="text-xs font-mono text-zinc-500 uppercase tracking-widest">
@@ -89,13 +101,23 @@ function PickerSelect({
         onChange={(e) => onChange(e.target.value)}
       >
         <option value="">— pick evaluation —</option>
-        {evaluations.map((ev) => (
-          <option key={ev.id} value={ev.id}>
-            #{ev.id} · {shortenCommit(ev.repo_commit)} ·{" "}
-            {formatDate(ev.created_at)} · {verdictIcon(ev.verdict)} {verdictWord(ev.verdict)}
-          </option>
-        ))}
+        {evaluations.map((ev) => {
+          const disabled = isIncompatible(ev);
+          return (
+            <option key={ev.id} value={ev.id} disabled={disabled}>
+              #{ev.id} · {shortenCommit(ev.repo_commit)} ·{" "}
+              {formatDate(ev.created_at)} · {verdictIcon(ev.verdict)} {verdictWord(ev.verdict)}
+              {disabled ? " — not comparable (different provider/model)" : ""}
+            </option>
+          );
+        })}
       </select>
+      {anyDisabled && (
+        <p className="text-[11px] font-mono text-zinc-400 leading-relaxed">
+          Disabled evaluations use a different provider or model than the other selection.
+          PRIMER refuses cross-model comparisons, so they cannot be compared here.
+        </p>
+      )}
       {value !== null && (
         <span className={`text-xs font-mono ${verdictColor(evaluations.find((e) => e.id === value)?.verdict ?? "within-noise")}`}>
           {(() => {

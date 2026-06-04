@@ -1,7 +1,7 @@
 "use client";
 
 import { computeComparison } from "@/lib/compare";
-import { formatPct, formatDelta, verdictColor, verdictWord, verdictIcon } from "@/lib/format";
+import { formatPct, formatDelta, formatCost, verdictColor, verdictWord, verdictIcon } from "@/lib/format";
 import { TaskFlipTable } from "@/components/TaskFlipTable";
 import type { DashboardData } from "@/lib/types";
 
@@ -64,6 +64,26 @@ export function ComparePanel({ a, b }: Props) {
           </div>
         )}
       </div>
+
+      {!result.refused &&
+        (noiseThreshold(a) !== noiseThreshold(b) ||
+          a.cost_confidence !== b.cost_confidence) && (
+          <div className="flex flex-col gap-1.5">
+            {noiseThreshold(a) !== noiseThreshold(b) && (
+              <p className="text-xs font-mono text-zinc-500 leading-relaxed max-w-[70ch]">
+                {noiseThreshold(a) > noiseThreshold(b) ? "Baseline A" : "New B"} is
+                noisier — its noise envelope is wider, so treat its delta with more
+                caution.
+              </p>
+            )}
+            {a.cost_confidence !== b.cost_confidence && (
+              <p className="text-xs font-mono text-amber-700 leading-relaxed max-w-[70ch]">
+                ⚠ Cost confidence differs (A: {a.cost_confidence}, B:{" "}
+                {b.cost_confidence}) — cost figures are not directly comparable.
+              </p>
+            )}
+          </div>
+        )}
 
       <div>
         <div className="text-zinc-500 text-xs font-mono uppercase tracking-widest mb-3">
@@ -147,6 +167,9 @@ function EvalHeadline({ label, data }: { label: string; data: DashboardData }) {
       </div>
       <div className="text-xs font-mono text-zinc-400">
         {data.model} · {data.provider}
+      </div>
+      <div className="text-xs font-mono text-zinc-500">
+        cost {formatCost(data.cost_with, data.cost_confidence)}
       </div>
     </div>
   );

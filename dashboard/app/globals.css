@@ -28,7 +28,59 @@ body {
   border-radius: 4px;
 }
 
-/* Reduced motion */
+/* ─── Premium motion layer (§7) ─────────────────────────────────────────────
+   Compositor-only (opacity/transform). Valence-neutral: every verdict class
+   receives the same animation parameters. Progressive: @supports guard so
+   browsers without animation-timeline get the static P5 experience.
+   Reduced-motion: the @media guard below collapses all durations to 0.01ms.
+   ──────────────────────────────────────────────────────────────────────────── */
+
+/* Scroll-driven per-task stagger — ~40ms per row, progressive enhancement.
+   Rows are already visible on entry; this adds a reveal-on-scroll refinement. */
+@supports (animation-timeline: scroll()) {
+  @media (prefers-reduced-motion: no-preference) {
+    table tbody tr {
+      animation: primer-row-reveal linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 20%;
+    }
+  }
+}
+
+@keyframes primer-row-reveal {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Cross-document view transitions — progressive: only if supported.
+   Transition is opacity/transform only (compositor). */
+@supports (view-transition-name: none) {
+  @media (prefers-reduced-motion: no-preference) {
+    ::view-transition-old(root),
+    ::view-transition-new(root) {
+      animation-duration: 0.22s;
+      animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    ::view-transition-old(root) {
+      animation-name: primer-vt-out;
+    }
+    ::view-transition-new(root) {
+      animation-name: primer-vt-in;
+    }
+  }
+}
+
+@keyframes primer-vt-out {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(-6px); }
+}
+
+@keyframes primer-vt-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── Reduced motion (must come after premium rules so it wins) ───────────── */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;

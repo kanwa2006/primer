@@ -109,10 +109,13 @@ function ConfidenceRuler({ delta, noiseThreshold, verdict }: ConfidenceRulerProp
       <div className="relative h-7 flex items-center" aria-hidden="true">
         {/* Base track */}
         <div className="w-full h-1.5 rounded-full bg-zinc-200 relative overflow-hidden">
-          {/* Noise zone — grey band */}
-          <div
+          {/* Noise band — draws in from centre (same timing regardless of verdict) */}
+          <motion.div
             className="absolute inset-y-0 bg-zinc-300/80"
-            style={{ left: `${noiseL}%`, width: `${noiseR - noiseL}%` }}
+            style={{ left: `${noiseL}%` }}
+            initial={{ width: "0%" }}
+            animate={{ width: `${noiseR - noiseL}%` }}
+            transition={{ duration: 0.32, delay: 0.12, ease: [0.16, 1, 0.3, 1] }}
           />
         </div>
 
@@ -131,7 +134,7 @@ function ConfidenceRuler({ delta, noiseThreshold, verdict }: ConfidenceRulerProp
             className={`w-3 h-3 rounded-full ${dotBgClass} ring-2 ring-white shadow-sm`}
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.4, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 0.32, delay: 0.30, ease: [0.16, 1, 0.3, 1] }}
           />
         </div>
       </div>
@@ -187,21 +190,29 @@ export function VerdictHero({ data }: VerdictHeroProps) {
       role="region"
       aria-label={`Verdict: ${verdictWord(v)}`}
     >
-      {/* Verdict word + icon (word-first, never color-alone) + delta */}
+      {/* Verdict word + icon (word-first, never color-alone) + delta — staggered reveal */}
       <div className="flex flex-col gap-2">
-        <span
+        {/* Word + icon: first in at delay 0 — identical timing regardless of verdict */}
+        <motion.span
           className={`flex items-center gap-2 text-lg sm:text-xl font-semibold tracking-tight ${headingTextClass(v)}`}
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.28, delay: 0.04, ease: [0.16, 1, 0.3, 1] }}
         >
           <span aria-hidden="true">{verdictIcon(v)}</span>
           {verdictWord(v)}
-        </span>
+        </motion.span>
 
-        <span
+        {/* Delta number: enters just after the word */}
+        <motion.span
           className={`text-6xl sm:text-7xl md:text-8xl font-mono font-semibold tracking-tight leading-none whitespace-nowrap ${deltaTextClass(v)}`}
           aria-label={`Success delta: ${formatHeroDelta(success_delta)} percentage points`}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.32, delay: 0.10, ease: [0.16, 1, 0.3, 1] }}
         >
           {formatHeroDelta(success_delta)}
-        </span>
+        </motion.span>
         <span className="text-xs font-mono text-zinc-500">pp = percentage points</span>
       </div>
 

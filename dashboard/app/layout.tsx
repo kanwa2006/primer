@@ -38,6 +38,7 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable}`}
       suppressHydrationWarning
+      style={{ viewTransitionName: "root" } as React.CSSProperties}
     >
       <body className="bg-white text-zinc-900 font-sans antialiased">
         <SiteHeader />

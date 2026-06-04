@@ -23,3 +23,23 @@ dashboard/*.tsbuildinfo
 # Misc
 .DS_Store
 skills-audit.txt
+
+# AI workspace
+.agents/
+.claude/
+skills-lock.json
+
+# Research
+Research/
+
+# Local inspection artifacts
+committed-files.txt
+repo-files.txt
+ledger.diff
+staged.txt
+taged.txt
+
+# AI execution docs
+docs/PRIMER_V2_IMPLEMENTATION_PROMPTS.md
+docs/v3/PRIMER_V3_EXECUTION_MASTERPLAN.md
+

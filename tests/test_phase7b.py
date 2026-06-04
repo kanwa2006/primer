@@ -34,7 +34,6 @@ from primer.report.export import (
     _compute_flip_state,
     _compute_verdict,
     build_dashboard_json,
-    write_dashboard_json,
 )
 
 
@@ -372,155 +371,19 @@ class TestBuildDashboardJsonProvenance:
 
 
 # ---------------------------------------------------------------------------
-# 8. write_dashboard_json() — file I/O
+# 8. write_dashboard_json() — REMOVED (V3 P4, §0.1.1 amendment)
+#    The legacy single-file data.json writer was deleted; the full site tree is
+#    produced via --site-output. build_dashboard_json (the shared field-builder)
+#    remains and is covered by sections 4–7 above.
 # ---------------------------------------------------------------------------
-
-class TestWriteDashboardJson:
-    def test_writes_file(self, tmp_path):
-        report = _make_report()
-        out = tmp_path / "data.json"
-        write_dashboard_json(report, out)
-        assert out.exists()
-
-    def test_written_file_is_valid_json(self, tmp_path):
-        out = tmp_path / "data.json"
-        write_dashboard_json(_make_report(), out)
-        data = json.loads(out.read_text(encoding="utf-8"))
-        assert isinstance(data, dict)
-
-    def test_returns_payload_dict(self, tmp_path):
-        out = tmp_path / "data.json"
-        result = write_dashboard_json(_make_report(), out)
-        assert isinstance(result, dict)
-        assert result["schema_version"] == 1
-
-    def test_payload_matches_file(self, tmp_path):
-        out = tmp_path / "data.json"
-        payload = write_dashboard_json(_make_report(success_delta=0.15), out)
-        data = json.loads(out.read_text(encoding="utf-8"))
-        assert data == payload
-
-    def test_overwrites_existing_file(self, tmp_path):
-        out = tmp_path / "data.json"
-        out.write_text('{"old": true}', encoding="utf-8")
-        write_dashboard_json(_make_report(), out)
-        data = json.loads(out.read_text(encoding="utf-8"))
-        assert "schema_version" in data
-        assert "old" not in data
-
-    def test_verdict_in_written_file(self, tmp_path):
-        out = tmp_path / "data.json"
-        write_dashboard_json(_make_report(success_delta=0.4), out)
-        data = json.loads(out.read_text(encoding="utf-8"))
-        assert data["verdict"] in {"positive", "negative", "within-noise", "refused"}
 
 
 # ---------------------------------------------------------------------------
-# 9. CLI: primer export --data-output writes data.json
+# 9. CLI: primer export --data-output — REMOVED (V3 P4, §0.1.1 amendment)
+#    The --data-output flag + legacy data.json path were deleted. The dashboard
+#    is now fed by --site-output (repository.json + evaluations/<id>.json),
+#    covered by tests/test_site_export.py. Badge (scores.json) export unchanged.
 # ---------------------------------------------------------------------------
-
-class TestExportCliDataOutput:
-    def test_data_output_writes_dashboard_json(self, tmp_path, monkeypatch):
-        from primer.cli import app
-        report = _make_report(success_delta=0.25)
-
-        db_path = tmp_path / "test_primer.db"
-        monkeypatch.setenv("DATABASE_URL", f"sqlite:///{db_path}")
-        monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-test")
-
-        badge_file = tmp_path / "scores.json"
-        data_file = tmp_path / "data.json"
-
-        with mock.patch("primer.store.db.latest_report", return_value=report):
-            runner = CliRunner()
-            result = runner.invoke(
-                app,
-                [
-                    "export", str(tmp_path),
-                    "--output", str(badge_file),
-                    "--data-output", str(data_file),
-                ],
-            )
-
-        assert result.exit_code == 0, f"exit={result.exit_code}\n{result.output}"
-        assert data_file.exists(), "data.json not written"
-        data = json.loads(data_file.read_text(encoding="utf-8"))
-        assert data["schema_version"] == 1
-        assert "verdict" in data
-        assert "per_task" in data
-
-    def test_no_data_output_does_not_write_data_json(self, tmp_path, monkeypatch):
-        from primer.cli import app
-        report = _make_report(success_delta=0.1)
-
-        db_path = tmp_path / "test_primer.db"
-        monkeypatch.setenv("DATABASE_URL", f"sqlite:///{db_path}")
-        monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-test")
-
-        badge_file = tmp_path / "scores.json"
-        data_file = tmp_path / "data.json"
-
-        with mock.patch("primer.store.db.latest_report", return_value=report):
-            runner = CliRunner()
-            result = runner.invoke(
-                app,
-                ["export", str(tmp_path), "--output", str(badge_file)],
-            )
-
-        assert result.exit_code == 0
-        assert not data_file.exists(), "data.json should not be written when --data-output not given"
-
-    def test_data_output_creates_parent_dirs(self, tmp_path, monkeypatch):
-        from primer.cli import app
-        report = _make_report(success_delta=0.2)
-
-        db_path = tmp_path / "test_primer.db"
-        monkeypatch.setenv("DATABASE_URL", f"sqlite:///{db_path}")
-        monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-test")
-
-        badge_file = tmp_path / "scores.json"
-        deep_data_file = tmp_path / "dashboard" / "public" / "data.json"
-
-        with mock.patch("primer.store.db.latest_report", return_value=report):
-            runner = CliRunner()
-            result = runner.invoke(
-                app,
-                [
-                    "export", str(tmp_path),
-                    "--output", str(badge_file),
-                    "--data-output", str(deep_data_file),
-                ],
-            )
-
-        assert result.exit_code == 0, f"exit={result.exit_code}\n{result.output}"
-        assert deep_data_file.exists()
-
-    def test_data_output_scores_json_still_written(self, tmp_path, monkeypatch):
-        from primer.cli import app
-        report = _make_report(success_delta=0.25)
-
-        db_path = tmp_path / "test_primer.db"
-        monkeypatch.setenv("DATABASE_URL", f"sqlite:///{db_path}")
-        monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-test")
-
-        badge_file = tmp_path / "scores.json"
-        data_file = tmp_path / "data.json"
-
-        with mock.patch("primer.store.db.latest_report", return_value=report):
-            runner = CliRunner()
-            runner.invoke(
-                app,
-                [
-                    "export", str(tmp_path),
-                    "--output", str(badge_file),
-                    "--data-output", str(data_file),
-                ],
-            )
-
-        # Both files should exist
-        assert badge_file.exists()
-        badge = json.loads(badge_file.read_text(encoding="utf-8"))
-        assert badge["schemaVersion"] == 1  # Phase 7A badge still works
 
 
 # ---------------------------------------------------------------------------
@@ -569,5 +432,4 @@ class TestArchBoundaryDashboard:
         from primer.report.export import (  # noqa: F401
             DASHBOARD_SCHEMA_VERSION,
             build_dashboard_json,
-            write_dashboard_json,
         )

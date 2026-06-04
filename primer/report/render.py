@@ -127,7 +127,7 @@ def _render_text(report: ScoreReport, *, console: Console) -> None:
         console.print(f"  Success  WITH    file: {report.success_rate_with:.1%}")
         console.print(f"  {delta_text}", end="")
         if noise_label:
-            console.print(f"  [yellow]{noise_label}[/yellow]", end="")
+            console.print(f"  [cyan]{noise_label}[/cyan]", end="")
         console.print()
 
     # Variance -- never collapsed
@@ -195,7 +195,7 @@ def _render_per_task_table(report: ScoreReport, *, console: Console) -> None:
     delta_refused = report.success_delta is None
     for ts in report.per_task:
         if ts.delta is None or delta_refused:
-            delta_cell = Text("N/A", style="yellow")
+            delta_cell = Text("N/A", style="grey62")
         else:
             delta_cell = _delta_text(ts.delta)
 
@@ -225,7 +225,7 @@ def _format_delta(delta: float) -> str:
     elif pct < 0:
         colour = "red"
     else:
-        colour = "yellow"
+        colour = "cyan"
     return f"[bold {colour}]delta success = {sign}{pct:.1f} pp[/bold {colour}]"
 
 
@@ -239,7 +239,7 @@ def _delta_text(delta: float) -> Text:
     elif pct < 0:
         return Text(label, style="red")
     else:
-        return Text(label, style="yellow")
+        return Text(label, style="cyan")
 
 
 def _format_cost(cost_usd: float, confidence: str) -> str:
@@ -314,7 +314,7 @@ def render_history_table(
     for r in rows:
         delta = r.get("success_delta")
         if delta is None:
-            delta_cell = Text("N/A", style="yellow")
+            delta_cell = Text("N/A", style="grey62")
         else:
             delta_cell = _delta_text(float(delta))
 
@@ -424,10 +424,10 @@ def render_compare(
 
     con.print(f"  Report #{id_a}  success without: {report_a.success_rate_without:.1%}  "
               f"with: {report_a.success_rate_with:.1%}  "
-              f"delta: {_format_delta(report_a.success_delta) if report_a.success_delta is not None else '[yellow]N/A[/yellow]'}")
+              f"delta: {_format_delta(report_a.success_delta) if report_a.success_delta is not None else '[grey62]N/A[/grey62]'}")
     con.print(f"  Report #{id_b}  success without: {report_b.success_rate_without:.1%}  "
               f"with: {report_b.success_rate_with:.1%}  "
-              f"delta: {_format_delta(report_b.success_delta) if report_b.success_delta is not None else '[yellow]N/A[/yellow]'}")
+              f"delta: {_format_delta(report_b.success_delta) if report_b.success_delta is not None else '[grey62]N/A[/grey62]'}")
     con.print()
 
     if provider_mismatch:
@@ -437,13 +437,13 @@ def render_compare(
             cross_delta = report_b.success_delta - report_a.success_delta
             pct = cross_delta * 100.0
             sign = "+" if pct > 0 else ""
-            colour = "green" if pct > 0 else ("red" if pct < 0 else "yellow")
+            colour = "green" if pct > 0 else ("red" if pct < 0 else "cyan")
             con.print(
                 f"  Cross-report delta (B minus A): "
                 f"[bold {colour}]{sign}{pct:.1f} pp[/bold {colour}]"
             )
         else:
-            con.print("  Cross-report delta: [yellow]N/A[/yellow] (one or both reports refused delta)")
+            con.print("  Cross-report delta: [grey62]N/A[/grey62] (one or both reports refused delta)")
     con.print()
 
     # -- Variance comparison --

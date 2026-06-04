@@ -65,9 +65,9 @@ def build_scores_json(report: "ScoreReport") -> dict:
     delta = report.success_delta
 
     if delta is None:
-        # Refused (provider/model mismatch) — conservative yellow
+        # Refused (provider/model mismatch) — muted/desaturated, not caution-yellow (§13).
         message = "N/A (refused)"
-        color = "yellow"
+        color = "71717a"
     elif delta > 0:
         pct = delta * 100.0
         message = f"+{pct:.1f} pp"
@@ -77,9 +77,9 @@ def build_scores_json(report: "ScoreReport") -> dict:
         message = f"{pct:.1f} pp"
         color = "red"
     else:
-        # Exactly zero
+        # Exactly zero / within-noise — calm slate-blue, not caution-yellow (§13).
         message = "0.0 pp"
-        color = "yellow"
+        color = "64748b"
 
     return {
         "schemaVersion": SCHEMA_VERSION,
@@ -226,19 +226,10 @@ def build_dashboard_json(report: "ScoreReport") -> dict:
     }
 
 
-def write_dashboard_json(report: "ScoreReport", output_path: Path) -> dict:
-    """Build and write the full dashboard data JSON to output_path.
-
-    Args:
-        report:      A fully-computed ScoreReport.
-        output_path: Destination path (e.g. dashboard/public/data.json).
-
-    Returns:
-        The payload dict that was written.
-    """
-    payload = build_dashboard_json(report)
-    output_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
-    return payload
+# NOTE (V3 P4, §0.1.1 amendment): the legacy single-file `write_dashboard_json`
+# writer + `--data-output` path was removed; the full site tree is produced via
+# `--site-output` (repository.json + evaluations/<id>.json). `build_dashboard_json`
+# above remains the shared field-builder for `build_evaluation_json`.
 
 
 # ---------------------------------------------------------------------------

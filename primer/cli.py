@@ -451,15 +451,6 @@ def export(
         "scores.json",
         help="Output file path for the scores.json badge payload.",
     ),
-    data_output: Optional[str] = typer.Option(
-        None,
-        "--data-output",
-        help=(
-            "Also write full dashboard data JSON to this path "
-            "(e.g. dashboard/public/data.json). "
-            "Omit to skip the dashboard export."
-        ),
-    ),
     site_output: Optional[str] = typer.Option(
         None,
         "--site-output",
@@ -482,16 +473,16 @@ def export(
     """Export the latest score report as scores.json (shields.io endpoint badge).
 
     Phase 7A: writes scores.json with {schemaVersion, label, message, color}.
-    Phase 7B: optionally writes full data.json for the Next.js scorecard dashboard.
+    Use --site-output to also write the full site JSON tree (repository.json +
+    evaluations/<id>.json) for the Next.js scorecard dashboard.
 
     Schema (Q5): {schemaVersion, label, message, color}
-      - green  if success_delta > 0
-      - yellow if success_delta == 0 or refused (None)
-      - red    if success_delta < 0
+      - green       if success_delta > 0
+      - calm/muted  if success_delta == 0 or refused (None)   (§13: off caution-yellow)
+      - red         if success_delta < 0
 
     Intended for CI: write scores.json to the gh-pages branch so a shields.io
     endpoint badge in README.md reflects the latest measured delta.
-    Use --data-output to also export the full report for the dashboard.
     """
     from datetime import datetime, timezone
     from pathlib import Path as _Path
@@ -499,7 +490,7 @@ def export(
     from primer.errors import ConfigError
     from primer.store.db import init_db, latest_report as _latest, list_reports, get_report_by_id
     from primer.report.export import (
-        write_scores_json, write_dashboard_json,
+        write_scores_json,
         build_evaluation_json, write_evaluation_json,
         build_repository_json, write_repository_json,
     )
@@ -560,16 +551,6 @@ def export(
         f"[bold]Exported[/bold] {output_path}  "
         f"{color_emoji} {payload['message']}"
     )
-
-    if data_output is not None:
-        data_path = _Path(data_output)
-        try:
-            data_path.parent.mkdir(parents=True, exist_ok=True)
-            write_dashboard_json(score_report, data_path)
-        except Exception as exc:
-            typer.echo(f"Dashboard data export failed: {exc}", err=True)
-            raise typer.Exit(code=1)
-        _console.print(f"[bold]Dashboard data[/bold] → {data_path}")
 
     if site_output is not None and site_items:
         _site_dir = _Path(site_output)

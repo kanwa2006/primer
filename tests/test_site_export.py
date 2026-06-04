@@ -627,22 +627,8 @@ class TestExportSiteOutputCLI:
         assert data["schemaVersion"] == 1
         assert "label" in data and "message" in data and "color" in data
 
-    def test_data_output_still_produces_dashboard_json(self, tmp_path):
-        db_url = self._db_url(tmp_path)
-        repo_dir = tmp_path / "repo"; repo_dir.mkdir()
-        self._persist(db_url, str(repo_dir))
-        out = tmp_path / "scores.json"
-        data_out = tmp_path / "data.json"
-        result = self._invoke(
-            ["export", "--output", str(out),
-             "--data-output", str(data_out), str(repo_dir)],
-            db_url,
-        )
-        assert result.exit_code == 0, result.output
-        assert data_out.exists()
-        data = json.loads(data_out.read_text())
-        assert data["schema_version"] == 1
-        assert "verdict" in data and "per_task" in data
+    # test_data_output_still_produces_dashboard_json — REMOVED (V3 P4, §0.1.1):
+    # the --data-output flag was deleted; --site-output is the dashboard feed.
 
     # ------------------------------------------------------------------
     # Empty-repo guard: no reports → exit 1

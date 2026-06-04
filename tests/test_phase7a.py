@@ -172,13 +172,17 @@ class TestBuildScoresJsonColor:
         payload = build_scores_json(_make_report(success_delta=-1.0))
         assert payload["color"] == "red"
 
-    def test_zero_delta_is_yellow(self):
+    def test_zero_delta_is_calm_not_yellow(self):
+        # V3 §13: zero / within-noise renders calm slate-blue, never caution-yellow.
         payload = build_scores_json(_make_report(success_delta=0.0))
-        assert payload["color"] == "yellow"
+        assert payload["color"] == "64748b"
+        assert payload["color"] != "yellow"
 
-    def test_none_delta_is_yellow(self):
+    def test_none_delta_is_muted_not_yellow(self):
+        # V3 §13: refused renders muted/desaturated, never caution-yellow.
         payload = build_scores_json(_make_report(success_delta=None, cost_delta_pct=None))
-        assert payload["color"] == "yellow"
+        assert payload["color"] == "71717a"
+        assert payload["color"] != "yellow"
 
 
 # ---------------------------------------------------------------------------

@@ -105,7 +105,13 @@ export function MetricsGrid({ data }: MetricsGridProps) {
         <MetricCell
           label="Cost delta"
           value={formatCostDelta(cost_delta_pct)}
-          sub={cost_confidence !== "exact" ? `confidence: ${cost_confidence}` : undefined}
+          sub={
+            cost_confidence === "estimated"
+              ? "estimated — provider cost approximate"
+              : cost_confidence === "free"
+              ? "local run — no provider cost"
+              : undefined
+          }
           index={6}
         />
       </div>

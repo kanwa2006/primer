@@ -44,10 +44,11 @@ export function ComparePanel({ a, b }: Props) {
         </div>
         {result.refused ? (
           <div className="flex flex-col gap-2">
-            <span className="text-xs font-mono text-refused uppercase tracking-wider">Refused</span>
-            <p className="text-xs text-zinc-500 font-mono leading-relaxed">
-              Provider or model differ between evaluations. Showing a cross-evaluation delta would
-              produce a fabricated number. Delta is withheld per honesty invariants.
+            <span className={`text-sm font-semibold ${verdictColor("refused")}`}>
+              <span aria-hidden="true">{verdictIcon("refused")}</span> {verdictWord("refused")}
+            </span>
+            <p className="text-xs text-zinc-500 font-mono leading-relaxed max-w-[60ch]">
+              {"PRIMER won't compare these runs: they used different models, so any difference couldn't be attributed to the context file. Refusing to guess is the point."}
             </p>
           </div>
         ) : (

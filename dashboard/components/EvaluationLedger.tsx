@@ -80,7 +80,7 @@ export function EvaluationLedger({
                 </td>
                 <td className="py-3">
                   {ev.egress_enforced ? (
-                    <span className="text-xs font-mono text-positive">enforced</span>
+                    <span className="text-xs font-mono text-emerald-700">enforced</span>
                   ) : (
                     <span className="text-xs font-mono text-zinc-400">open</span>
                   )}

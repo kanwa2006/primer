@@ -31,7 +31,7 @@ function interpretationCopy(verdict: VerdictLabel, delta: number | null): string
       );
     }
     case "refused":
-      return "Provider or model mismatch across compared runs — delta refused. Check the warnings above.";
+      return "PRIMER won't compute a delta here: the two runs used different models, so any difference couldn't be attributed to the context file. This is by design — check the warnings above.";
   }
 }
 

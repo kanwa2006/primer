@@ -1,7 +1,7 @@
 "use client";
 
 import { computeComparison } from "@/lib/compare";
-import { formatPct, formatDelta, verdictColor } from "@/lib/format";
+import { formatPct, formatDelta, verdictColor, verdictWord, verdictIcon } from "@/lib/format";
 import { TaskFlipTable } from "@/components/TaskFlipTable";
 import type { DashboardData } from "@/lib/types";
 
@@ -130,7 +130,7 @@ function EvalHeadline({ label, data }: { label: string; data: DashboardData }) {
       </div>
       <div>
         <span className={`text-xs font-mono font-semibold ${verdictColor(data.verdict)}`}>
-          {data.verdict}
+          <span aria-hidden="true">{verdictIcon(data.verdict)}</span> {verdictWord(data.verdict)}
         </span>
       </div>
       <div className="text-xs font-mono text-zinc-400">

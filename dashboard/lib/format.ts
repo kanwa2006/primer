@@ -44,6 +44,37 @@ export function verdictBg(verdict: VerdictLabel): string {
   }
 }
 
+// Word-first verdict label (§5/§16) — never shown by color alone.
+export function verdictWord(verdict: VerdictLabel): string {
+  switch (verdict) {
+    case "positive":     return "Helped";
+    case "negative":     return "Hurt";
+    case "within-noise": return "No measurable effect";
+    case "refused":      return "Not comparable";
+  }
+}
+
+// Non-color shape cue paired with the word (§13).
+export function verdictIcon(verdict: VerdictLabel): string {
+  switch (verdict) {
+    case "positive":     return "▲";
+    case "negative":     return "▼";
+    case "within-noise": return "≈";
+    case "refused":      return "⊘";
+  }
+}
+
+// Human flip-state labels (§16).
+export function flipLabel(state: string): string {
+  switch (state) {
+    case "FAIL_TO_PASS": return "Fixed by the file";
+    case "PASS_TO_FAIL": return "Broken by the file";
+    case "PASS_TO_PASS": return "Passed with and without";
+    case "FAIL_TO_FAIL": return "Failed with and without";
+    default:             return state;
+  }
+}
+
 export function flipStateColor(state: string): string {
   switch (state) {
     case "FAIL_TO_PASS": return "text-positive";

@@ -1,16 +1,10 @@
 "use client";
 
 import { motion } from "motion/react";
+import { verdictWord, verdictIcon } from "@/lib/format";
 import type { DashboardData, VerdictLabel } from "@/lib/types";
 
 // ─── Display maps (all logic local per B.3 spec) ─────────────────────────────
-
-const VERDICT_HEADING: Record<VerdictLabel, string> = {
-  "positive":     "POSITIVE",
-  "negative":     "NEGATIVE",
-  "within-noise": "WITHIN MEASUREMENT NOISE",
-  "refused":      "REFUSED",
-};
 
 function formatHeroDelta(delta: number | null): string {
   if (delta === null) return "N/A";
@@ -56,16 +50,16 @@ function cardBgClass(v: VerdictLabel): string {
 }
 
 function headingTextClass(v: VerdictLabel): string {
-  if (v === "positive") return "text-positive";
-  if (v === "negative") return "text-negative";
+  if (v === "positive") return "text-emerald-700";
+  if (v === "negative") return "text-red-700";
   return "text-zinc-500";
 }
 
 function deltaTextClass(v: VerdictLabel): string {
-  if (v === "positive") return "text-positive";
-  if (v === "negative") return "text-negative";
+  if (v === "positive") return "text-emerald-700";
+  if (v === "negative") return "text-red-700";
   if (v === "within-noise") return "text-zinc-700";
-  return "text-zinc-400";
+  return "text-zinc-500";
 }
 
 // ─── Confidence Ruler ────────────────────────────────────────────────────────
@@ -191,22 +185,24 @@ export function VerdictHero({ data }: VerdictHeroProps) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
       role="region"
-      aria-label={`Verdict: ${VERDICT_HEADING[v]}`}
+      aria-label={`Verdict: ${verdictWord(v)}`}
     >
-      {/* Verdict heading + delta — grouped tightly */}
+      {/* Verdict word + icon (word-first, never color-alone) + delta */}
       <div className="flex flex-col gap-2">
         <span
-          className={`text-xs font-mono uppercase tracking-widest ${headingTextClass(v)}`}
+          className={`flex items-center gap-2 text-lg sm:text-xl font-semibold tracking-tight ${headingTextClass(v)}`}
         >
-          {VERDICT_HEADING[v]}
+          <span aria-hidden="true">{verdictIcon(v)}</span>
+          {verdictWord(v)}
         </span>
 
         <span
           className={`text-6xl sm:text-7xl md:text-8xl font-mono font-semibold tracking-tight leading-none whitespace-nowrap ${deltaTextClass(v)}`}
-          aria-label={`Success delta: ${formatHeroDelta(success_delta)}`}
+          aria-label={`Success delta: ${formatHeroDelta(success_delta)} percentage points`}
         >
           {formatHeroDelta(success_delta)}
         </span>
+        <span className="text-xs font-mono text-zinc-500">pp = percentage points</span>
       </div>
 
       {/* Interpretation */}

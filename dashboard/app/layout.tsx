@@ -17,11 +17,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "PRIMER — Scorecard",
-  description: "PRIMER measurement harness: before/after context-file evaluation scorecard.",
+  title: "PRIMER — context-file measurement",
+  description:
+    "PRIMER measures whether this repo's AI-agent context file improves coding-agent success, under controlled conditions.",
   openGraph: {
-    title: "PRIMER Scorecard",
-    description: "AI agent context-file evaluation results.",
+    title: "PRIMER",
+    description:
+      "PRIMER measures whether this repo's AI-agent context file improves coding-agent success, under controlled conditions.",
     type: "website",
   },
 };
@@ -39,6 +41,11 @@ export default function RootLayout({
     >
       <body className="bg-white text-zinc-900 font-sans antialiased">
         <SiteHeader />
+        <div className="border-b border-zinc-200 bg-zinc-50">
+          <p className="max-w-5xl mx-auto px-6 py-2 text-xs text-zinc-500 leading-relaxed">
+            {"PRIMER measures whether this repo's AI-agent context file improves coding-agent success, under controlled conditions."}
+          </p>
+        </div>
         {children}
         <SiteFooter />
       </body>

@@ -2,7 +2,7 @@
 
 import { EmptyState } from "@/components/EmptyState";
 import { EvaluationLedger } from "@/components/EvaluationLedger";
-import { formatDelta, shortenCommit, verdictColor } from "@/lib/format";
+import { formatDelta, shortenCommit, verdictColor, verdictWord, verdictIcon } from "@/lib/format";
 import type { RepositoryData } from "@/lib/types";
 
 export function RepositoryOverview({ data }: { data: RepositoryData }) {
@@ -39,7 +39,7 @@ export function RepositoryOverview({ data }: { data: RepositoryData }) {
           <div className="mt-2 text-sm">
             <span className="text-zinc-500">Latest result: </span>
             <span className={`font-medium ${verdictColor(data.latest_verdict)}`}>
-              {data.latest_verdict}
+              <span aria-hidden="true">{verdictIcon(data.latest_verdict)}</span> {verdictWord(data.latest_verdict)}
             </span>
             {latestEval.success_delta !== null && (
               <span className="text-zinc-500 ml-2">

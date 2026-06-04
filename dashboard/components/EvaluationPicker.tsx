@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { formatDate, shortenCommit, verdictColor } from "@/lib/format";
+import { formatDate, shortenCommit, verdictColor, verdictWord, verdictIcon } from "@/lib/format";
 import type { EvaluationSummary } from "@/lib/types";
 
 interface Props {
@@ -92,13 +92,16 @@ function PickerSelect({
         {evaluations.map((ev) => (
           <option key={ev.id} value={ev.id}>
             #{ev.id} · {shortenCommit(ev.repo_commit)} ·{" "}
-            {formatDate(ev.created_at)} · {ev.verdict}
+            {formatDate(ev.created_at)} · {verdictIcon(ev.verdict)} {verdictWord(ev.verdict)}
           </option>
         ))}
       </select>
       {value !== null && (
         <span className={`text-xs font-mono ${verdictColor(evaluations.find((e) => e.id === value)?.verdict ?? "within-noise")}`}>
-          {evaluations.find((e) => e.id === value)?.verdict ?? ""}
+          {(() => {
+            const ev = evaluations.find((e) => e.id === value);
+            return ev ? `${verdictIcon(ev.verdict)} ${verdictWord(ev.verdict)}` : "";
+          })()}
         </span>
       )}
     </div>

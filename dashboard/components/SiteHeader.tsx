@@ -11,7 +11,6 @@ export default function SiteHeader() {
           >
             PRIMER
           </Link>
-          <span className="text-zinc-500 text-xs font-mono">scorecard</span>
         </div>
 
         <nav className="flex items-center gap-4">

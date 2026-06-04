@@ -1,14 +1,15 @@
 "use client";
 
 import { motion, AnimatePresence } from "motion/react";
-import { flipStateBadge, formatPct, formatDelta } from "@/lib/format";
+import { flipStateBadge, flipLabel, formatPct, formatDelta } from "@/lib/format";
 import type { TaskData } from "@/lib/types";
 
-const FLIP_LABEL: Record<string, string> = {
-  FAIL_TO_PASS: "FAIL → PASS",
-  PASS_TO_FAIL: "PASS → FAIL",
-  PASS_TO_PASS: "PASS → PASS",
-  FAIL_TO_FAIL: "FAIL → FAIL",
+// Interesting-first: the two genuine flips lead, unaffected tasks follow (§11).
+const FLIP_ORDER: Record<string, number> = {
+  FAIL_TO_PASS: 0,
+  PASS_TO_FAIL: 1,
+  PASS_TO_PASS: 2,
+  FAIL_TO_FAIL: 3,
 };
 
 interface TaskRowProps {
@@ -42,7 +43,7 @@ function TaskRow({ task, index }: TaskRowProps) {
         <span
           className={`inline-flex items-center px-2 py-0.5 rounded border text-xs font-mono ${flipStateBadge(task.flip_state)}`}
         >
-          {FLIP_LABEL[task.flip_state] ?? task.flip_state}
+          {flipLabel(task.flip_state)}
         </span>
       </td>
 
@@ -56,7 +57,7 @@ function TaskRow({ task, index }: TaskRowProps) {
 
       <td className="py-3 text-xs font-mono text-zinc-500">
         {task.flaky_any && (
-          <span className="text-amber-500">flaky</span>
+          <span className="text-amber-700">flaky</span>
         )}
       </td>
     </motion.tr>
@@ -75,6 +76,10 @@ export function TaskFlipTable({ tasks }: TaskFlipTableProps) {
       </div>
     );
   }
+
+  const orderedTasks = [...tasks].sort(
+    (a, b) => (FLIP_ORDER[a.flip_state] ?? 9) - (FLIP_ORDER[b.flip_state] ?? 9)
+  );
 
   return (
     <div>
@@ -103,7 +108,7 @@ export function TaskFlipTable({ tasks }: TaskFlipTableProps) {
           </thead>
           <tbody>
             <AnimatePresence initial={false}>
-              {tasks.map((task, i) => (
+              {orderedTasks.map((task, i) => (
                 <TaskRow key={task.task_id} task={task} index={i} />
               ))}
             </AnimatePresence>

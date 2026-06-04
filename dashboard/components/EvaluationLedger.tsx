@@ -6,6 +6,8 @@ import {
   formatDelta,
   shortenCommit,
   verdictColor,
+  verdictWord,
+  verdictIcon,
 } from "@/lib/format";
 import type { EvaluationSummary } from "@/lib/types";
 
@@ -62,7 +64,7 @@ export function EvaluationLedger({
                 </td>
                 <td className="py-3 pr-6">
                   <span className={`text-xs font-medium ${verdictColor(ev.verdict)}`}>
-                    {ev.verdict}
+                    <span aria-hidden="true">{verdictIcon(ev.verdict)}</span> {verdictWord(ev.verdict)}
                   </span>
                 </td>
                 <td className="py-3 pr-6">

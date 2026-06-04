@@ -143,9 +143,9 @@ export function TaskFlipTable({ tasks }: TaskFlipTableProps) {
 
   return (
     <div>
-      <div className="text-zinc-500 text-xs font-mono uppercase tracking-widest mb-3">
+      <h2 className="text-zinc-500 text-xs font-mono uppercase tracking-widest mb-3">
         Per-task flips
-      </div>
+      </h2>
 
       <FlipStackedBar counts={counts} total={tasks.length} />
 

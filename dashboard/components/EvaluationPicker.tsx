@@ -60,7 +60,7 @@ export function EvaluationPicker({ evaluations, a, b }: Props) {
         />
       </div>
       {(a !== null || b !== null) && (
-        <p className="text-xs font-mono text-zinc-400">
+        <p className="text-xs font-mono text-zinc-500">
           {a === null || b === null
             ? "Select both evaluations to view the comparison."
             : null}
@@ -113,7 +113,7 @@ function PickerSelect({
         })}
       </select>
       {anyDisabled && (
-        <p className="text-[11px] font-mono text-zinc-400 leading-relaxed">
+        <p className="text-[11px] font-mono text-zinc-500 leading-relaxed">
           Disabled evaluations use a different provider or model than the other selection.
           PRIMER refuses cross-model comparisons, so they cannot be compared here.
         </p>

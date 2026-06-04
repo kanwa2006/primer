@@ -17,6 +17,9 @@ interface Props {
 export function EvaluationDetail({ data, prevId }: Props) {
   return (
     <div className="flex flex-col gap-8">
+      <h1 className="sr-only">
+        {data.repo.name} — Evaluation #{data.id}
+      </h1>
       <div className="flex items-center justify-between">
         <Link
           href="/"

@@ -116,7 +116,7 @@ function EvalPickerFetch({
 
 function Spinner() {
   return (
-    <div className="text-zinc-400 text-xs font-mono py-8 text-center animate-pulse">
+    <div className="text-zinc-500 text-xs font-mono py-8 text-center animate-pulse">
       Loading…
     </div>
   );
@@ -136,7 +136,7 @@ export default function ComparePage() {
         </div>
         <Suspense
           fallback={
-            <div className="text-zinc-400 text-xs font-mono py-8 text-center animate-pulse">
+            <div className="text-zinc-500 text-xs font-mono py-8 text-center animate-pulse">
               Loading…
             </div>
           }

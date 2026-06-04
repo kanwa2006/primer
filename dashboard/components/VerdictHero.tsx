@@ -162,7 +162,7 @@ function ConfidenceRuler({ delta, noiseThreshold, verdict }: ConfidenceRulerProp
       </div>
 
       {/* Caption */}
-      <p className="text-[11px] font-mono text-zinc-400 leading-snug">
+      <p className="text-[11px] font-mono text-zinc-500 leading-snug">
         {caption}
       </p>
     </div>
@@ -231,7 +231,7 @@ export function VerdictHero({ data }: VerdictHeroProps) {
       )}
 
       {/* Measurement confidence footer */}
-      <p className="text-[11px] font-mono text-zinc-400">
+      <p className="text-[11px] font-mono text-zinc-500">
         {verdict !== "refused"
           ? `n=${n_tasks} tasks · ${runs_per_config} runs/config · σ=±${(success_stddev * 100).toFixed(3)} pp`
           : `n=${n_tasks} tasks · ${runs_per_config} runs/config`}

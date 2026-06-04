@@ -40,7 +40,7 @@ export function EmptyState() {
         to measure whether your context file helps.
       </p>
 
-      <div className="text-xs font-mono text-zinc-400 tracking-widest uppercase">
+      <div className="text-xs font-mono text-zinc-500 tracking-widest uppercase">
         PRIMER — a measurement harness
       </div>
     </motion.div>

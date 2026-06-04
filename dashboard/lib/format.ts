@@ -101,7 +101,7 @@ export function shortenCommit(sha: string): string {
 
 export function formatDate(iso: string): string {
   try {
-    return new Date(iso).toLocaleString(undefined, {
+    return new Date(iso).toLocaleString("en-GB", {
       dateStyle: "medium",
       timeStyle: "short",
     });

@@ -26,7 +26,7 @@ function Field({
 }) {
   return (
     <div className="flex flex-col gap-0.5">
-      <span className="text-zinc-400 text-[10px] font-mono uppercase tracking-widest leading-none">
+      <span className="text-zinc-500 text-[10px] font-mono uppercase tracking-widest leading-none">
         {label}
       </span>
       <span className={`text-xs font-mono break-all ${className}`}>{value}</span>
@@ -98,7 +98,7 @@ export function TrustArchitecture({ data }: { data: DashboardData }) {
 
           {/* Isolation + egress (highlighted) */}
           <div className="flex flex-col gap-0.5">
-            <span className="text-zinc-400 text-[10px] font-mono uppercase tracking-widest leading-none">
+            <span className="text-zinc-500 text-[10px] font-mono uppercase tracking-widest leading-none">
               Isolation
             </span>
             <span className="flex flex-wrap items-center gap-2 text-xs font-mono text-zinc-700">
@@ -142,7 +142,7 @@ export function TrustArchitecture({ data }: { data: DashboardData }) {
           {/* PRIMER overhead — a SEPARATE line, never summed into the eval cost delta */}
           <div className="border-t border-zinc-200 pt-4 flex flex-col gap-1">
             <div className="flex flex-col gap-0.5">
-              <span className="text-zinc-400 text-[10px] font-mono uppercase tracking-widest leading-none">
+              <span className="text-zinc-500 text-[10px] font-mono uppercase tracking-widest leading-none">
                 PRIMER overhead
               </span>
               <span className="text-xs font-mono text-zinc-700">

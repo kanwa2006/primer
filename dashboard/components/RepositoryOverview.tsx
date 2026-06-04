@@ -54,7 +54,7 @@ export function RepositoryOverview({ data }: { data: RepositoryData }) {
           )}
         </div>
 
-        <div className="mt-1 text-xs font-mono text-zinc-400">
+        <div className="mt-1 text-xs font-mono text-zinc-500">
           {shortenCommit(data.repo.latest_commit)}
         </div>
 
@@ -70,13 +70,13 @@ export function RepositoryOverview({ data }: { data: RepositoryData }) {
                   <span className="text-zinc-700 font-mono text-sm">
                     {formatDelta(latestEval.success_delta)}
                   </span>
-                  <span className="text-zinc-400 font-mono text-xs">
+                  <span className="text-zinc-500 font-mono text-xs">
                     ± {(latestEval.noise_threshold * 100).toFixed(1)} pp noise threshold
                   </span>
                 </>
               )}
             </div>
-            <p className="mt-1 text-xs font-mono text-zinc-400 leading-relaxed max-w-[60ch]">
+            <p className="mt-1 text-xs font-mono text-zinc-500 leading-relaxed max-w-[60ch]">
               Showing the last export — commit {shortenCommit(latestEval.repo_commit)}, {formatDate(latestEval.created_at)}. Re-run PRIMER and re-export to update.
             </p>
           </>
@@ -85,11 +85,11 @@ export function RepositoryOverview({ data }: { data: RepositoryData }) {
 
       {/* Evaluation ledger */}
       <div>
-        <h2 className="text-xs font-mono uppercase tracking-widest text-zinc-400 mb-4">
+        <h2 className="text-xs font-mono uppercase tracking-widest text-zinc-500 mb-4">
           Evaluations
         </h2>
         {data.evaluation_count === 1 ? (
-          <p className="text-xs font-mono text-zinc-400 mb-3 max-w-[60ch] leading-relaxed">
+          <p className="text-xs font-mono text-zinc-500 mb-3 max-w-[60ch] leading-relaxed">
             This is the first evaluation for this repo. History appears once you run PRIMER again.
           </p>
         ) : (

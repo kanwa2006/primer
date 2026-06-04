@@ -58,9 +58,9 @@ export function MetricsGrid({ data }: MetricsGridProps) {
   return (
     <div>
       {/* Section header */}
-      <div className="text-zinc-500 text-xs font-mono uppercase tracking-widest mb-3">
+      <h2 className="text-zinc-500 text-xs font-mono uppercase tracking-widest mb-3">
         Metrics
-      </div>
+      </h2>
 
       {/* Success rates */}
       <div className="border-t border-zinc-200 grid grid-cols-2 md:grid-cols-4 divide-x divide-zinc-200">

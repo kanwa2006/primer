@@ -26,18 +26,18 @@ export function EmptyState() {
       </div>
 
       <h2 className="text-zinc-900 text-xl font-semibold tracking-tight mb-2">
-        No report data
+        No evaluations yet
       </h2>
-      <p className="text-zinc-500 text-sm max-w-[40ch] leading-relaxed mb-6">
+      <p className="text-zinc-500 text-sm max-w-[44ch] leading-relaxed mb-6">
         Run{" "}
         <code className="font-mono text-zinc-700 bg-zinc-100 px-1.5 py-0.5 rounded text-xs">
           primer eval .
         </code>{" "}
         then{" "}
         <code className="font-mono text-zinc-700 bg-zinc-100 px-1.5 py-0.5 rounded text-xs">
-          primer export --data-output dashboard/public/data.json
+          primer export --site-output dashboard/public
         </code>{" "}
-        to generate report data.
+        to measure whether your context file helps.
       </p>
 
       <div className="text-xs font-mono text-zinc-400 tracking-widest uppercase">

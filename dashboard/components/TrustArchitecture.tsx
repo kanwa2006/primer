@@ -1,294 +1,68 @@
 "use client";
 
-import type { ReactNode } from "react";
 import { motion } from "motion/react";
-import { shortenCommit, formatPct } from "@/lib/format";
-import type { DashboardData, VerdictLabel } from "@/lib/types";
+import { formatCost, formatPct, shortenCommit, formatDate } from "@/lib/format";
+import type { DashboardData } from "@/lib/types";
 
-// ─── Shared micro-primitives ──────────────────────────────────────────────────
+const AGENT_DISPLAY: Record<string, string> = {
+  claude_code: "Claude Code",
+  codex: "Codex",
+  gemini_code: "Gemini Code",
+  openrouter: "OpenRouter",
+};
 
-function MonoValue({
-  children,
-  className = "",
+function formatAgent(adapter: string): string {
+  return AGENT_DISPLAY[adapter] ?? adapter.replace(/_/g, " ");
+}
+
+function Field({
+  label,
+  value,
+  className = "text-zinc-700",
 }: {
-  children: ReactNode;
+  label: string;
+  value: string;
   className?: string;
 }) {
   return (
-    <span className={`text-sm font-mono font-medium leading-snug ${className}`}>
-      {children}
-    </span>
-  );
-}
-
-function MetaLabel({ children }: { children: ReactNode }) {
-  return (
-    <span className="text-[9px] font-mono text-zinc-400 uppercase tracking-widest leading-none">
-      {children}
-    </span>
-  );
-}
-
-// ─── Pillar value compositions ────────────────────────────────────────────────
-
-function IsolationValue({
-  networkMode,
-  egressEnforced,
-}: {
-  networkMode: string;
-  egressEnforced: boolean;
-}) {
-  return (
-    <div className="flex flex-col gap-2">
-      <div className="flex items-center gap-2">
-        <span
-          aria-hidden="true"
-          className={`w-1.5 h-1.5 rounded-full shrink-0 mt-px ${
-            egressEnforced ? "bg-emerald-500" : "bg-amber-400"
-          }`}
-        />
-        <MonoValue className="text-zinc-900">{networkMode}</MonoValue>
-      </div>
-      <MonoValue
-        className={`text-xs ${
-          egressEnforced ? "text-zinc-500" : "text-amber-500"
-        }`}
-      >
-        {egressEnforced ? "egress enforced" : "egress not enforced"}
-      </MonoValue>
-    </div>
-  );
-}
-
-function OneVariableValue() {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <MonoValue className="text-zinc-900">Context file only</MonoValue>
-      <MonoValue className="text-xs text-zinc-400">
-        Everything else identical
-      </MonoValue>
-    </div>
-  );
-}
-
-function PairedValue({
-  nTasks,
-  runsPerConfig,
-}: {
-  nTasks: number;
-  runsPerConfig: number;
-}) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <MonoValue className="text-zinc-900">
-        {nTasks} tasks x {runsPerConfig} runs/config
-      </MonoValue>
-      <MonoValue className="text-xs text-zinc-500">
-        {nTasks * runsPerConfig * 2} total runs
-      </MonoValue>
-    </div>
-  );
-}
-
-function ReproducibleValue({
-  commit,
-  baseImage,
-}: {
-  commit: string;
-  baseImage: string;
-}) {
-  const displayImage = baseImage.startsWith("sha256:")
-    ? "sha256:" + baseImage.slice(7, 19) + "..."
-    : baseImage.length > 24
-    ? baseImage.slice(0, 24) + "..."
-    : baseImage;
-
-  return (
-    <div className="flex flex-col gap-3">
-      {/* Evaluated Commit row */}
-      <div className="flex flex-col gap-0.5">
-        <MetaLabel>Evaluated Commit</MetaLabel>
-        <MonoValue className="text-zinc-900">{shortenCommit(commit)}</MonoValue>
-      </div>
-
-      {/* Row separator */}
-      <div className="w-full h-px bg-zinc-200" aria-hidden="true" />
-
-      {/* Base Image row */}
-      <div className="flex flex-col gap-0.5">
-        <MetaLabel>Base Image</MetaLabel>
-        <MonoValue className="text-zinc-900 break-all">{displayImage}</MonoValue>
-      </div>
-    </div>
-  );
-}
-
-function VarianceValue({
-  stddev,
-  min,
-  max,
-}: {
-  stddev: number;
-  min: number;
-  max: number;
-}) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <MonoValue className="text-zinc-900">
-        σ = ±{(stddev * 100).toFixed(1)} pp
-      </MonoValue>
-      <MonoValue className="text-xs text-zinc-500">
-        range {formatPct(min)} to {formatPct(max)}
-      </MonoValue>
-    </div>
-  );
-}
-
-const VERDICT_DISPLAY: Record<VerdictLabel, string> = {
-  positive: "Positive",
-  negative: "Negative",
-  "within-noise": "Within-noise",
-  refused: "Refused",
-};
-
-const VERDICT_ORDER: VerdictLabel[] = [
-  "positive",
-  "negative",
-  "within-noise",
-  "refused",
-];
-
-function HonestOutcomesValue({
-  activeVerdict,
-}: {
-  activeVerdict: VerdictLabel;
-}) {
-  return (
-    <div
-      className="flex flex-col gap-1"
-      aria-label={`Current verdict: ${activeVerdict}`}
-    >
-      {VERDICT_ORDER.map((v) => (
-        <div key={v} className="flex items-baseline gap-2">
-          <MonoValue
-            className={v === activeVerdict ? "text-zinc-900" : "text-zinc-400"}
-          >
-            {VERDICT_DISPLAY[v]}
-          </MonoValue>
-          {v === activeVerdict && (
-            <span
-              className="text-[9px] font-mono text-zinc-400 uppercase tracking-wider"
-              aria-hidden="true"
-            >
-              this report
-            </span>
-          )}
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// ─── TrustPillar ──────────────────────────────────────────────────────────────
-
-interface TrustPillarProps {
-  label: string;
-  value: ReactNode;
-  explanation: string;
-  index: number;
-}
-
-function TrustPillar({ label, value, explanation, index }: TrustPillarProps) {
-  return (
-    <motion.div
-      className="flex flex-col gap-3 px-5 py-5"
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{
-        duration: 0.28,
-        delay: 0.1 + index * 0.055,
-        ease: [0.16, 1, 0.3, 1],
-      }}
-    >
-      <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-400 leading-none">
+    <div className="flex flex-col gap-0.5">
+      <span className="text-zinc-400 text-[10px] font-mono uppercase tracking-widest leading-none">
         {label}
       </span>
-      <div>{value}</div>
-      <p className="text-xs text-zinc-500 leading-relaxed">{explanation}</p>
-    </motion.div>
+      <span className={`text-xs font-mono break-all ${className}`}>{value}</span>
+    </div>
   );
 }
 
-// ─── TrustArchitecture ────────────────────────────────────────────────────────
-
-interface TrustArchitectureProps {
-  data: DashboardData;
-}
-
-export function TrustArchitecture({ data }: TrustArchitectureProps) {
+// Consolidated "Methods" credential — measurement identity, integrity, and
+// provenance in one collapsible artifact (Provenance-is-the-credential, §3/§10).
+// Collapsed it shows a one-line summary (never a mystery box); expanded it lets
+// a developer confirm isolation / egress_enforced / provenance in one interaction.
+export function TrustArchitecture({ data }: { data: DashboardData }) {
   const {
+    provider,
+    model,
+    agent_adapter,
     network_mode,
     egress_enforced,
+    base_image,
+    repo_commit,
+    created_at,
     n_tasks,
     runs_per_config,
-    repo_commit,
-    base_image,
     success_stddev,
     success_min,
     success_max,
-    verdict,
+    primer_overhead_usd,
+    primer_overhead_confidence,
   } = data;
 
-  const pillars: Omit<TrustPillarProps, "index">[] = [
-    {
-      label: "Isolated Execution",
-      value: (
-        <IsolationValue
-          networkMode={network_mode}
-          egressEnforced={egress_enforced}
-        />
-      ),
-      explanation:
-        "Each run starts in a fresh container. Egress is restricted to the agent's required API host only - no other outbound access.",
-    },
-    {
-      label: "One Variable",
-      value: <OneVariableValue />,
-      explanation:
-        "Both arms run with identical flags, the same agent, and the same task. The only difference is whether the context file is present in /work.",
-    },
-    {
-      label: "Paired Before / After",
-      value: <PairedValue nTasks={n_tasks} runsPerConfig={runs_per_config} />,
-      explanation: `${runs_per_config} runs per arm detect flaky tests before they contaminate the delta. Runs are sequential - no resource contention noise.`,
-    },
-    {
-      label: "Reproducible",
-      value: (
-        <ReproducibleValue commit={repo_commit} baseImage={base_image} />
-      ),
-      explanation:
-        "Fixed commit and immutable base image digest. This exact evaluation can be reproduced by anyone with the same repo commit.",
-    },
-    {
-      label: "Variance Reported",
-      value: (
-        <VarianceValue
-          stddev={success_stddev}
-          min={success_min}
-          max={success_max}
-        />
-      ),
-      explanation:
-        "Spread across runs is always surfaced. When the delta falls inside the noise envelope, PRIMER labels it explicitly rather than reporting a false signal.",
-    },
-    {
-      label: "Honest Outcomes",
-      value: <HonestOutcomesValue activeVerdict={verdict} />,
-      explanation:
-        "A ~0 or negative delta is a valid, shippable result. PRIMER is designed to measure - not to prove that context files help.",
-    },
-  ];
+  const displayImage =
+    base_image.length > 40 ? base_image.slice(0, 40) + "…" : base_image;
+
+  const summary = `${formatAgent(agent_adapter)} · ${provider}/${model} · ${n_tasks} tasks × ${runs_per_config} runs/config · egress ${
+    egress_enforced ? "enforced" : "not enforced"
+  }`;
 
   return (
     <motion.div
@@ -296,29 +70,92 @@ export function TrustArchitecture({ data }: TrustArchitectureProps) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
     >
-      <div className="text-zinc-500 text-xs font-mono uppercase tracking-widest mb-3">
-        How this was measured
-      </div>
+      <details className="group border border-zinc-200 rounded-lg bg-white">
+        <summary className="cursor-pointer list-none px-5 py-4 flex items-center justify-between gap-4 hover:bg-zinc-50 transition-colors rounded-lg">
+          <span className="flex flex-col gap-1 min-w-0">
+            <span className="text-zinc-500 text-xs font-mono uppercase tracking-widest">
+              Methods — how this was measured
+            </span>
+            <span className="text-zinc-700 text-xs font-mono truncate">
+              {summary}
+            </span>
+          </span>
+          <span
+            aria-hidden="true"
+            className="text-zinc-400 text-xs font-mono shrink-0 transition-transform group-open:rotate-180"
+          >
+            ▾
+          </span>
+        </summary>
 
-      <div
-        className="border border-zinc-200 rounded-lg overflow-hidden"
-        role="region"
-        aria-label="Measurement integrity"
-      >
-        {/* Row 1: Isolated Execution / One Variable / Paired Before After */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-zinc-200">
-          {pillars.slice(0, 3).map((p, i) => (
-            <TrustPillar key={p.label} {...p} index={i} />
-          ))}
-        </div>
+        <div className="border-t border-zinc-200 px-5 py-5 flex flex-col gap-6">
+          <p className="text-zinc-700 text-sm leading-relaxed max-w-[60ch]">
+            Measured the effect of a repository context file on AI agent task
+            success. Both arms ran the same agent, the same flags, and the same
+            tasks — the only difference was whether the context file was present
+            in <span className="font-mono text-xs">/work</span>.
+          </p>
 
-        {/* Row 2: Reproducible / Variance Reported / Honest Outcomes */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-zinc-200 border-t border-zinc-200">
-          {pillars.slice(3, 6).map((p, i) => (
-            <TrustPillar key={p.label} {...p} index={i + 3} />
-          ))}
+          {/* Isolation + egress (highlighted) */}
+          <div className="flex flex-col gap-0.5">
+            <span className="text-zinc-400 text-[10px] font-mono uppercase tracking-widest leading-none">
+              Isolation
+            </span>
+            <span className="flex flex-wrap items-center gap-2 text-xs font-mono text-zinc-700">
+              <span
+                aria-hidden="true"
+                className={`w-1.5 h-1.5 rounded-full ${
+                  egress_enforced ? "bg-emerald-600" : "bg-amber-600"
+                }`}
+              />
+              {network_mode}
+              <span
+                className={`font-medium ${
+                  egress_enforced ? "text-emerald-700" : "text-amber-700"
+                }`}
+              >
+                {egress_enforced ? "egress enforced" : "egress not enforced"}
+              </span>
+            </span>
+          </div>
+
+          {/* Provenance + measurement fields */}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-5">
+            <Field label="Provider" value={provider} />
+            <Field label="Model" value={model} />
+            <Field label="Agent" value={formatAgent(agent_adapter)} />
+            <Field
+              label="Tasks"
+              value={`${n_tasks} × ${runs_per_config} runs/config`}
+            />
+            <Field
+              label="Variance"
+              value={`σ ±${(success_stddev * 100).toFixed(1)} pp · ${formatPct(
+                success_min
+              )}–${formatPct(success_max)}`}
+            />
+            <Field label="Evaluated commit" value={shortenCommit(repo_commit)} />
+            <Field label="Base image" value={displayImage} />
+            <Field label="Evaluated" value={formatDate(created_at)} />
+          </div>
+
+          {/* PRIMER overhead — a SEPARATE line, never summed into the eval cost delta */}
+          <div className="border-t border-zinc-200 pt-4 flex flex-col gap-1">
+            <div className="flex flex-col gap-0.5">
+              <span className="text-zinc-400 text-[10px] font-mono uppercase tracking-widest leading-none">
+                PRIMER overhead
+              </span>
+              <span className="text-xs font-mono text-zinc-700">
+                {formatCost(primer_overhead_usd, primer_overhead_confidence)}
+              </span>
+            </div>
+            <p className="text-zinc-500 text-xs font-mono mt-1 max-w-[60ch] leading-relaxed">
+              The cost of generating the context file (Layer-1 provider). Never
+              included in the eval cost delta above.
+            </p>
+          </div>
         </div>
-      </div>
+      </details>
     </motion.div>
   );
 }

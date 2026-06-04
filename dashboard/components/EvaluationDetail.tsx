@@ -4,11 +4,9 @@ import Link from "next/link";
 import { motion } from "motion/react";
 import { WarningBanner } from "@/components/WarningBanner";
 import { VerdictHero } from "@/components/VerdictHero";
-import { MeasurementIdentity } from "@/components/MeasurementIdentity";
 import { TrustArchitecture } from "@/components/TrustArchitecture";
 import { MetricsGrid } from "@/components/MetricsGrid";
 import { TaskFlipTable } from "@/components/TaskFlipTable";
-import { ProvenanceFooter } from "@/components/ProvenanceFooter";
 import type { DashboardData } from "@/lib/types";
 
 interface Props {
@@ -52,20 +50,14 @@ export function EvaluationDetail({ data, prevId }: Props) {
         {/* Primary verdict — the answer */}
         <VerdictHero data={data} />
 
-        {/* Measurement identity — what was measured, by whom, how */}
-        <MeasurementIdentity data={data} />
-
-        {/* Trust architecture — why the result is credible */}
-        <TrustArchitecture data={data} />
-
         {/* Metrics grid */}
         <MetricsGrid data={data} />
 
+        {/* Methods credential — measurement identity, integrity & provenance (collapsible) */}
+        <TrustArchitecture data={data} />
+
         {/* Per-task flip table */}
         <TaskFlipTable tasks={data.per_task} />
-
-        {/* Provenance */}
-        <ProvenanceFooter data={data} />
       </motion.div>
     </div>
   );

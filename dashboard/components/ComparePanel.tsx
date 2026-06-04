@@ -5,6 +5,11 @@ import { formatPct, formatDelta, verdictColor, verdictWord, verdictIcon } from "
 import { TaskFlipTable } from "@/components/TaskFlipTable";
 import type { DashboardData } from "@/lib/types";
 
+// Noise threshold = max(1/n_tasks, success_stddev) — mirrors the engine verdict rule.
+function noiseThreshold(d: DashboardData): number {
+  return Math.max(1 / d.n_tasks, d.success_stddev);
+}
+
 interface Props {
   a: DashboardData;
   b: DashboardData;
@@ -46,11 +51,16 @@ export function ComparePanel({ a, b }: Props) {
             </p>
           </div>
         ) : (
-          <div className="flex items-baseline gap-3">
-            <span className="text-2xl font-mono font-semibold text-zinc-900">
-              {formatDelta(result.cross_report_delta)}
-            </span>
-            <span className="text-xs font-mono text-zinc-500">B − A success delta</span>
+          <div className="flex flex-col gap-2">
+            <div className="flex items-baseline gap-3">
+              <span className="text-2xl font-mono font-semibold text-zinc-900">
+                {formatDelta(result.cross_report_delta)}
+              </span>
+              <span className="text-xs font-mono text-zinc-500">B − A success delta</span>
+            </div>
+            <p className="text-xs font-mono text-zinc-400 leading-relaxed max-w-[70ch]">
+              Interpret against each evaluation&apos;s noise envelope — A ± {(noiseThreshold(a) * 100).toFixed(1)} pp, B ± {(noiseThreshold(b) * 100).toFixed(1)} pp. A cross-evaluation delta smaller than these bands is not a reliable difference.
+            </p>
           </div>
         )}
       </div>
@@ -118,12 +128,14 @@ function EvalHeadline({ label, data }: { label: string; data: DashboardData }) {
   return (
     <div className="border border-zinc-200 rounded-lg p-5 flex flex-col gap-3">
       <div className="text-zinc-400 text-xs font-mono uppercase tracking-widest">{label}</div>
-      <div className="flex items-baseline gap-2">
+      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
         <span className="text-lg font-mono font-semibold text-zinc-900">
           {formatPct(data.success_rate_with)}
         </span>
         <span className="text-xs text-zinc-500 font-mono">with</span>
-        <span className="text-xs text-zinc-500 font-mono">({formatDelta(data.success_delta)})</span>
+        <span className="text-xs text-zinc-500 font-mono">
+          ({formatDelta(data.success_delta)} ± {(noiseThreshold(data) * 100).toFixed(1)} pp)
+        </span>
       </div>
       <div className="text-xs text-zinc-500 font-mono">
         {formatPct(data.success_rate_without)} without

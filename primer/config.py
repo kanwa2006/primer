@@ -11,12 +11,6 @@ from pydantic import SecretStr
 
 from primer.errors import ConfigError
 
-# Static map: agent name → the single env-var key it requires inside the eval container.
-# Phase 3 will replace this with adapter.required_env_key(); Phase 0 uses this map.
-_AGENT_REQUIRED_KEY: dict[str, str] = {
-    "claude_code": "ANTHROPIC_API_KEY",
-}
-
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
@@ -63,6 +57,37 @@ class Settings(BaseSettings):
         """Docker HTTP read timeout: must exceed eval timeout (Spec D)."""
         return self.primer_eval_timeout_s + 30
 
+    def validate_generation_runtime(self) -> None:
+        """Raise ConfigError if the selected LLM provider key is missing.
+
+        Validates ONLY the generation provider (Layer-1 brain) — used by
+        `primer init`, which never touches the eval agent. Does not validate
+        `primer_agent`. Never logs or includes key values in error messages.
+        """
+        provider = self.primer_llm_provider.lower()
+        provider_key_map: dict[str, SecretStr | None] = {
+            "anthropic": self.anthropic_api_key,
+            "openai": self.openai_api_key,
+            "gemini": self.gemini_api_key,
+            "openrouter": self.openrouter_api_key,
+            "ollama": None,  # no key required
+        }
+
+        if provider not in provider_key_map:
+            raise ConfigError(
+                f"Unknown LLM provider: {provider!r}. "
+                f"Supported: {sorted(provider_key_map)}"
+            )
+
+        if provider != "ollama":
+            key = provider_key_map[provider]
+            if key is None:
+                env_var = f"{provider.upper()}_API_KEY"
+                raise ConfigError(
+                    f"Provider {provider!r} requires {env_var} to be set. "
+                    f"Add it to .env (see .env.example)."
+                )
+
     def validate_runtime(self) -> None:
         """Raise ConfigError if the selected provider or agent key is missing.
 
@@ -92,19 +117,25 @@ class Settings(BaseSettings):
                     f"Add it to .env (see .env.example)."
                 )
 
-        # Check the eval agent's required key
-        agent = self.primer_agent.lower()
-        if agent not in _AGENT_REQUIRED_KEY:
-            raise ConfigError(
-                f"Unknown agent: {agent!r}. Supported: {sorted(_AGENT_REQUIRED_KEY)}"
-            )
+        # Resolve the eval agent's required key from its adapter (Phase 3:
+        # replaces the static map). Each adapter declares its own requirement
+        # via required_env_key(); a None return means the agent needs no key
+        # (e.g. a local/offline agent). PRIMER is therefore not Anthropic-only —
+        # selecting a different agent re-points validation automatically.
+        from primer.eval.adapters import get_adapter
 
-        required_env = _AGENT_REQUIRED_KEY[agent]
-        agent_key: SecretStr | None = getattr(
-            self, required_env.lower(), None
-        )
-        if agent_key is None:
-            raise ConfigError(
-                f"Agent {agent!r} requires {required_env} to be set. "
-                f"Add it to .env (see .env.example)."
-            )
+        agent = self.primer_agent.lower()
+        try:
+            adapter = get_adapter(agent)
+        except ValueError as exc:
+            # Registry already produces a key-free "Unknown agent adapter" message.
+            raise ConfigError(str(exc)) from exc
+
+        required_env = adapter.required_env_key()
+        if required_env:
+            agent_key: SecretStr | None = getattr(self, required_env.lower(), None)
+            if agent_key is None:
+                raise ConfigError(
+                    f"Agent {agent!r} requires {required_env} to be set. "
+                    f"Add it to .env (see .env.example)."
+                )

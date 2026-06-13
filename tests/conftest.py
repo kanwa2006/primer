@@ -35,6 +35,12 @@ def clean_env(monkeypatch):
     ]
     for var in vars_to_remove:
         monkeypatch.delenv(var, raising=False)
+
+    # Prevent pydantic-settings from reading .env so file-based values don't
+    # leak into tests that expect a clean environment.
+    from primer.config import Settings
+    monkeypatch.setattr(Settings, "model_config", {**Settings.model_config, "env_file": None})
+
     yield
 
 

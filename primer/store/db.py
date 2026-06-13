@@ -141,10 +141,11 @@ def save_report(
         cur.execute(
             """INSERT INTO runs
                (report_id, task_id, repo_commit, with_context, passed, timeout, flaky,
+                harness_fingerprint_valid,
                 agent_adapter, agent_tokens, iterations, duration_s, cost_usd, cost_confidence,
                 provider, model, base_image, network_mode, egress_allowed_host,
                 egress_enforced, caps_dropped, container_id, agent_log_path, run_timestamp)
-               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
             (
                 report_id,
                 run.task_id,
@@ -153,6 +154,9 @@ def save_report(
                 1 if run.passed else 0,
                 1 if run.timeout else 0,
                 1 if run.flaky else 0,
+                1 if run.harness_fingerprint_valid else (
+                    0 if run.harness_fingerprint_valid is False else None
+                ),
                 run.agent_adapter,
                 run.agent_tokens,
                 run.iterations,
@@ -276,12 +280,18 @@ def _row_to_score_report(conn: sqlite3.Connection, row: sqlite3.Row) -> "ScoreRe
         pr_w = sum(r["passed"] for r in without) / len(without) if without else 0.0
         pr_t = sum(r["passed"] for r in with_) / len(with_) if with_ else 0.0
         flaky_any = any(r["flaky"] for r in task_runs)
+        # M7: if the report recorded a provider_mismatch_warning, delta was
+        # refused at aggregation time and must remain None on reconstruction.
+        task_delta = (
+            None if row["provider_mismatch_warning"] is not None
+            else pr_t - pr_w
+        )
         per_task.append(TaskScore(
             task_id=tr["task_key"],
             task_type=tr["task_type"],
             pass_rate_without=pr_w,
             pass_rate_with=pr_t,
-            delta=pr_t - pr_w,
+            delta=task_delta,
             runs=len(task_runs),
             flaky_any=bool(flaky_any),
         ))

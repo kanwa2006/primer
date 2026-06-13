@@ -86,11 +86,114 @@ def test_find_covering_test_finds_calculator(py_repo_path):
 
 
 def test_find_covering_test_returns_none_for_no_match(py_repo_path):
+    # No test file relates to this module (and validator.py has no test either),
+    # so selection must refuse rather than fall back to an arbitrary test.
     result = _find_covering_test("samplelib/nonexistent_module.py", str(py_repo_path))
-    # May return a fallback test or None — but should not raise
-    # (the fallback path returns any test in tests/)
-    # Just assert it doesn't raise
-    assert result is None or isinstance(result, str)
+    assert result is None
+
+
+def test_find_covering_test_no_arbitrary_fallback(py_repo_path):
+    """A source file with no naming-related test must NOT borrow test_calculator.py.
+
+    Regression: the old fallback returned the first test in tests/ for any
+    unmatched source file, producing candidates that validate_task always
+    rejected (the test never exercised the target module).
+    """
+    result = _find_covering_test("samplelib/validator.py", str(py_repo_path))
+    assert result is None
+
+
+def _make_repo(tmp_path, source_rel, test_names):
+    """Build a throwaway repo with the given source file and test files."""
+    src = tmp_path / source_rel
+    src.parent.mkdir(parents=True, exist_ok=True)
+    src.write_text("def f():\n    return 1\n")
+    tests_dir = tmp_path / "tests"
+    tests_dir.mkdir(parents=True, exist_ok=True)
+    for name in test_names:
+        (tests_dir / name).write_text("def test_x():\n    assert True\n")
+    return tmp_path
+
+
+def test_find_covering_test_exact_stem_match(tmp_path):
+    repo = _make_repo(
+        tmp_path,
+        "pkg/payment.py",
+        ["test_payment.py", "test_unrelated.py"],
+    )
+    result = _find_covering_test("pkg/payment.py", str(repo))
+    assert result is not None
+    assert Path(result).name == "test_payment.py"
+
+
+def test_find_covering_test_suffix_stem_match(tmp_path):
+    repo = _make_repo(
+        tmp_path,
+        "pkg/payment.py",
+        ["payment_test.py", "test_unrelated.py"],
+    )
+    result = _find_covering_test("pkg/payment.py", str(repo))
+    assert result is not None
+    assert Path(result).name == "payment_test.py"
+
+
+def test_find_covering_test_fuzzy_stem_match(tmp_path):
+    # No exact test_payment.py, but a test whose subject contains the stem token.
+    repo = _make_repo(
+        tmp_path,
+        "pkg/payment.py",
+        ["test_payment_edge_cases.py", "test_unrelated.py"],
+    )
+    result = _find_covering_test("pkg/payment.py", str(repo))
+    assert result is not None
+    assert Path(result).name == "test_payment_edge_cases.py"
+
+
+def test_find_covering_test_multi_token_fuzzy_match(tmp_path):
+    # Multi-token stem: all tokens must appear in the test subject.
+    repo = _make_repo(
+        tmp_path,
+        "pkg/agent_adapter.py",
+        ["test_agent_adapter_integration.py", "test_adapter.py"],
+    )
+    result = _find_covering_test("pkg/agent_adapter.py", str(repo))
+    assert result is not None
+    assert Path(result).name == "test_agent_adapter_integration.py"
+
+
+def test_find_covering_test_rejects_unrelated(tmp_path):
+    repo = _make_repo(
+        tmp_path,
+        "pkg/payment.py",
+        ["test_arch_boundaries.py", "test_cli_smoke.py", "test_config.py"],
+    )
+    result = _find_covering_test("pkg/payment.py", str(repo))
+    assert result is None
+
+
+def test_find_covering_test_exact_preferred_over_fuzzy(tmp_path):
+    repo = _make_repo(
+        tmp_path,
+        "pkg/payment.py",
+        ["test_payment_edge_cases.py", "test_payment.py"],
+    )
+    result = _find_covering_test("pkg/payment.py", str(repo))
+    assert Path(result).name == "test_payment.py"
+
+
+def test_find_covering_test_deterministic(tmp_path):
+    # Multiple eligible fuzzy matches → same one chosen every time.
+    repo = _make_repo(
+        tmp_path,
+        "pkg/payment.py",
+        ["test_payment_b.py", "test_payment_a.py", "test_payment_c.py"],
+    )
+    results = {
+        _find_covering_test("pkg/payment.py", str(repo)) for _ in range(5)
+    }
+    assert len(results) == 1
+    # Deterministic order = sorted by path; first fuzzy match is the 'a' file.
+    assert Path(next(iter(results))).name == "test_payment_a.py"
 
 
 # ---------------------------------------------------------------------------
@@ -172,12 +275,6 @@ def test_apply_stub_makes_test_fail(py_repo_copy):
         timeout=60,
     )
     assert result.returncode == 0, f"Fixture tests should pass initially:\n{result.stdout}"
-
-    # Install the package in the copy
-    subprocess.run(
-        ["pip", "install", "-e", ".", "-q", "--no-deps"],
-        cwd=str(py_repo_copy), capture_output=True, timeout=30,
-    )
 
     # Apply stub mutation
     ok = _apply_stub("samplelib/calculator.py", "add", py_repo_copy)
@@ -262,6 +359,39 @@ def test_derive_tasks_different_seeds_may_differ(py_repo_path, mock_config):
 
     assert len(tasks1) >= 1
     assert len(tasks2) >= 1
+
+
+def test_derive_tasks_cli_invocation_passes_config(py_repo_path, mock_config):
+    """Regression: cli.py was calling derive_tasks() without the required config arg.
+
+    This test replicates the exact keyword-argument pattern used in cli.py to ensure
+    config is forwarded correctly and no TypeError is raised.
+    """
+    from primer.eval.tasks import derive_tasks
+    from primer.ingest.models import RepoProfile, CommandSet
+
+    profile = RepoProfile(
+        repo_commit="abc123",
+        languages=[],
+        frameworks=[],
+        commands=CommandSet(None, None, None, None, None),
+        top_level_dirs=[],
+        key_modules=[],
+        domain_terms=[],
+        file_nodes=[],
+        dependency_edges=[],
+    )
+
+    with patch("primer.eval.tasks.validate_task", return_value=True):
+        # Mirrors the exact call in cli.py eval command
+        tasks = derive_tasks(
+            profile=profile,
+            repo_path=str(py_repo_path),
+            config=mock_config,
+            n=mock_config.primer_task_count,
+            min_tasks=mock_config.primer_min_tasks,
+        )
+    assert isinstance(tasks, list)
 
 
 def test_insufficient_tasks_raises(mock_config):

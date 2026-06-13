@@ -73,6 +73,7 @@ CREATE TABLE IF NOT EXISTS runs (
     passed              INTEGER NOT NULL,
     timeout             INTEGER NOT NULL,
     flaky               INTEGER NOT NULL,
+    harness_fingerprint_valid INTEGER,
     agent_adapter       TEXT NOT NULL,
     agent_tokens        INTEGER NOT NULL,
     iterations          INTEGER NOT NULL,

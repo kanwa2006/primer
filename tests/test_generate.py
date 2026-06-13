@@ -320,7 +320,7 @@ class TestAnthropicProvider:
 
         provider._client.messages.create = fake_create
 
-        result = asyncio.get_event_loop().run_until_complete(
+        result = asyncio.run(
             provider.complete("sys", [{"role": "user", "content": "hi"}], "claude-sonnet-4-6")
         )
         assert isinstance(result, LLMResponse)
@@ -350,7 +350,7 @@ class TestOllamaProvider:
         valid_content = "Run tests: `pytest tests/`\nBuild: `make build`\nNon-obvious: use widget API."
 
         with patch.object(p, "_call_once", new=AsyncMock(return_value=valid_content)):
-            result = asyncio.get_event_loop().run_until_complete(
+            result = asyncio.run(
                 p.complete("sys", [{"role": "user", "content": "hi"}], "llama3.3")
             )
         assert isinstance(result, LLMResponse)
@@ -366,7 +366,7 @@ class TestOllamaProvider:
         # Both attempts return empty
         with patch.object(p, "_call_once", new=AsyncMock(return_value="")):
             with pytest.raises(OllamaOutputError):
-                asyncio.get_event_loop().run_until_complete(
+                asyncio.run(
                     p.complete("sys", [{"role": "user", "content": "hi"}], "llama3.3")
                 )
 
@@ -378,7 +378,7 @@ class TestOllamaProvider:
         # Always returns fewer than 20 chars
         with patch.object(p, "_call_once", new=AsyncMock(return_value="ok")):
             with pytest.raises(OllamaOutputError):
-                asyncio.get_event_loop().run_until_complete(
+                asyncio.run(
                     p.complete("sys", [{"role": "user", "content": "hi"}], "llama3.3")
                 )
 
@@ -395,7 +395,7 @@ class TestOllamaProvider:
             return "" if call_count["n"] == 1 else valid
 
         with patch.object(p, "_call_once", side_effect=side_effect):
-            result = asyncio.get_event_loop().run_until_complete(
+            result = asyncio.run(
                 p.complete("sys", [{"role": "user", "content": "hi"}], "llama3.3")
             )
         assert isinstance(result, LLMResponse)
@@ -469,7 +469,7 @@ class TestWriteContext:
         provider = self._mock_provider(VALID_CONTENT)
         profile = _make_profile()
 
-        result = asyncio.get_event_loop().run_until_complete(
+        result = asyncio.run(
             write_context(profile, provider, filename="CLAUDE.md")
         )
         assert isinstance(result, GenerationResult)
@@ -479,7 +479,7 @@ class TestWriteContext:
         for name in ("CLAUDE.md", "AGENTS.md", "GEMINI.md"):
             provider = self._mock_provider(VALID_CONTENT)
             profile = _make_profile()
-            result = asyncio.get_event_loop().run_until_complete(
+            result = asyncio.run(
                 write_context(profile, provider, filename=name)
             )
             assert result.filename == name
@@ -489,7 +489,7 @@ class TestWriteContext:
         provider = self._mock_provider(VALID_CONTENT)
         profile = _make_profile()
 
-        asyncio.get_event_loop().run_until_complete(
+        asyncio.run(
             write_context(profile, provider, filename="CLAUDE.md")
         )
         assert provider.complete.call_count == 1
@@ -499,7 +499,7 @@ class TestWriteContext:
         provider = self._mock_provider(VALID_CONTENT)
         profile = _make_profile()
 
-        result = asyncio.get_event_loop().run_until_complete(
+        result = asyncio.run(
             write_context(profile, provider, filename="CLAUDE.md")
         )
         assert result.usage.cost_confidence in ("exact", "estimated", "free")
@@ -508,7 +508,7 @@ class TestWriteContext:
         provider = self._mock_provider(VALID_CONTENT)
         profile = _make_profile()
 
-        result = asyncio.get_event_loop().run_until_complete(
+        result = asyncio.run(
             write_context(profile, provider, filename="CLAUDE.md")
         )
         assert result.lines == len(VALID_CONTENT.splitlines())
@@ -528,7 +528,7 @@ class TestWriteContext:
         provider.complete = fake_complete
 
         profile = _make_profile()
-        result = asyncio.get_event_loop().run_until_complete(
+        result = asyncio.run(
             write_context(profile, provider, filename="CLAUDE.md")
         )
         assert isinstance(result, GenerationResult)
@@ -542,7 +542,7 @@ class TestWriteContext:
 
         profile = _make_profile()
         with pytest.raises(GenerationError):
-            asyncio.get_event_loop().run_until_complete(
+            asyncio.run(
                 write_context(profile, provider, filename="CLAUDE.md")
             )
 
@@ -554,7 +554,7 @@ class TestWriteContext:
 
         profile = _make_profile()
         with pytest.raises(GenerationError):
-            asyncio.get_event_loop().run_until_complete(
+            asyncio.run(
                 write_context(profile, provider, filename="CLAUDE.md")
             )
 
@@ -564,7 +564,7 @@ class TestWriteContext:
         provider = self._mock_provider(content)
         profile = _make_profile(test_cmd="pytest tests/ -x")
 
-        result = asyncio.get_event_loop().run_until_complete(
+        result = asyncio.run(
             write_context(profile, provider, filename="CLAUDE.md")
         )
         assert "pytest" in result.content
@@ -575,7 +575,7 @@ class TestWriteContext:
         provider = self._mock_provider(VALID_CONTENT)
         profile = _make_profile()
 
-        result = asyncio.get_event_loop().run_until_complete(
+        result = asyncio.run(
             write_context(profile, provider, filename="CLAUDE.md")
         )
         # filename field should reflect what was passed in, not a hardcoded value
@@ -598,7 +598,7 @@ class TestWriteContext:
         provider.complete = AsyncMock(return_value=free_response)
 
         profile = _make_profile()
-        result = asyncio.get_event_loop().run_until_complete(
+        result = asyncio.run(
             write_context(profile, provider, filename="AGENTS.md")
         )
         assert result.usage.cost_confidence == "free"

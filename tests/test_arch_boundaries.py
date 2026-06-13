@@ -14,7 +14,7 @@ import pytest
 
 PRIMER_PKG = Path(__file__).parent.parent / "primer"
 
-VENDOR_SDK_NAMES = {"anthropic", "openai", "google.generativeai"}
+VENDOR_SDK_NAMES = {"anthropic", "openai", "google"}
 DOCKER_NAMES = {"docker"}
 SQLITE_NAMES = {"sqlite3", "aiosqlite"}
 
@@ -50,7 +50,7 @@ def _py_files_outside(directory: Path, subdir: str) -> list[Path]:
 
 
 class TestVendorSDKBoundary:
-    """Vendor SDK imports (anthropic, openai, google.generativeai) only in primer/llm/."""
+    """Vendor SDK imports (anthropic, openai, google.genai / google.generativeai) only in primer/llm/."""
 
     def test_no_vendor_sdk_outside_llm(self):
         violations = []

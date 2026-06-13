@@ -11,9 +11,11 @@ Telemetry parsing:
   - Reads num_turns for iterations
   - Reads is_error for agent_error
 
-Eligibility guard:
-  - If the repo already has a committed CLAUDE.md, eval is out of MVP scope.
-  - That is the developer-file experiment; PRIMER only measures its own generated file.
+Committed context-file handling (C3):
+  - If the repo already has a committed CLAUDE.md, evaluation continues normally.
+  - WITHOUT arm: the committed file is removed from the clone before the container runs.
+  - WITH arm: the committed file is overwritten with the PRIMER-generated content.
+  - runner.run_task() emits a warning when a committed file is detected in the clone.
 """
 from __future__ import annotations
 
@@ -31,9 +33,14 @@ if TYPE_CHECKING:
 
 log = logging.getLogger(__name__)
 
-# The unique instruction planted in the context file for the M4 harness-validity gate.
-# If the WITH arm does not produce this fingerprint, the harness is broken.
-FINGERPRINT_INSTRUCTION = "PRIMER_FINGERPRINT_V1"
+# ⚠️ [EMPIRICAL VERIFICATION REQUIRED] — see 16_BLK2_SPECIFICATION.md §4.4
+# FINGERPRINT_INSTRUCTION is a provisional candidate. It must be verified against a
+# live Claude Code run before the gate is considered operative. Replace this text with
+# the confirmed wording after completing the verification procedure.
+FINGERPRINT_INSTRUCTION = (
+    'PRIMER_FINGERPRINT_V1: Before starting the task, output '
+    '"primer_fingerprint_v1_acknowledged" as the first line of your response.'
+)
 FINGERPRINT_MARKER = "primer_fingerprint_v1_acknowledged"
 
 
@@ -59,14 +66,95 @@ class ClaudeCodeAdapter(AgentAdapter):
 
         No --bare (M4). Flags identical both arms (AD-4).
         The prompt is passed via -p / --print flag.
+
+        Permission configuration (runtime compatibility fix):
+          --permission-mode dontAsk   makes the session fully non-interactive:
+                                      tools not in the allowedTools list are
+                                      silently denied rather than prompting,
+                                      preventing container hangs.
+          --allowedTools Bash,Edit,MultiEdit,Write,Read
+                                      pre-authorises the exact tool set needed
+                                      for eval tasks (file reads, edits, writes,
+                                      bash for self-verification). Equivalent to
+                                      bypassPermissions for these tools; root-
+                                      compatible (bypassPermissions is blocked
+                                      under root in Claude Code 2.1.x+).
         """
         return [
             "claude",
             "--print",
             task.prompt,
             "--output-format", "json",
-            "--permission-mode", "bypassPermissions",
+            "--permission-mode", "dontAsk",
+            "--allowedTools", "Bash,Edit,MultiEdit,Write,Read",
         ]
+
+    def image_layers(self) -> list[str]:
+        """Dockerfile instructions to provision the Claude Code CLI in the eval image.
+
+        Uses Anthropic's official signed apt repository (Node-free path).
+        The apt package installs a standalone native binary to /usr/bin/claude,
+        which is on the default PATH for the container's sh -c invocation.
+
+        Installation approach (from External Verification / BLK-1):
+          - Targets the 'stable' channel (~1 week behind latest) for reproducibility.
+          - Does NOT use npm: python:3.11-slim has a documented apt/npm defect.
+          - Does NOT use the native curl installer: it targets ~/.local/bin which
+            is not on the default PATH for a non-login container shell.
+          - Disables DISABLE_AUTOUPDATER: eval containers run on an internal-only
+            network; an update check would be blocked by the egress proxy and
+            would add latency or noise to the eval run.
+
+        Prerequisites (curl, ca-certificates, gnupg) are not present in
+        python:3.11-slim and must be installed before the apt key can be added.
+        Source: https://code.claude.com/docs/en/setup
+        """
+        return [
+            # Install prerequisites absent from python:3.11-slim (Debian Bookworm slim)
+            (
+                "RUN apt-get update "
+                "&& apt-get install -y --no-install-recommends curl ca-certificates gnupg "
+                "&& rm -rf /var/lib/apt/lists/*"
+            ),
+            # Add Anthropic's signed apt repo (stable channel) and install claude-code
+            (
+                "RUN install -d -m 0755 /etc/apt/keyrings "
+                "&& curl -fsSL https://downloads.claude.ai/keys/claude-code.asc "
+                "-o /etc/apt/keyrings/claude-code.asc "
+                '&& echo "deb [signed-by=/etc/apt/keyrings/claude-code.asc] '
+                'https://downloads.claude.ai/claude-code/apt/stable stable main" '
+                "> /etc/apt/sources.list.d/claude-code.list "
+                "&& apt-get update "
+                "&& apt-get install -y --no-install-recommends claude-code "
+                "&& apt-get clean "
+                "&& rm -rf /var/lib/apt/lists/*"
+            ),
+            # Disable background auto-updater: eval containers use an internal-only
+            # network where update checks are blocked by the egress proxy.
+            "ENV DISABLE_AUTOUPDATER=1",
+        ]
+
+    def fingerprint_instruction(self) -> str | None:
+        """Return the M4 fingerprint directive to append to CLAUDE.md in the WITH arm.
+
+        ⚠️ [EMPIRICAL VERIFICATION REQUIRED] — the text is provisional.
+        See 16_BLK2_SPECIFICATION.md §4 and §4.4 for verification procedure.
+        """
+        return FINGERPRINT_INSTRUCTION
+
+    def check_fingerprint(self, raw_log: str, with_context: bool) -> bool | None:
+        """Search raw_log for FINGERPRINT_MARKER (M4 Probe A / Probe C gate).
+
+        WITH arm: returns True if marker found, False otherwise.
+        WITHOUT arm: returns None (gate not applicable for this arm).
+        Must not raise.
+        """
+        if not with_context:
+            return None
+        try:
+            return FINGERPRINT_MARKER in raw_log
+        except Exception:
+            return None
 
     def parse_telemetry(self, raw_log: str) -> AgentTelemetry:
         """Parse Claude Code JSON output for token/cost telemetry.

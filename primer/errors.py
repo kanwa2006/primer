@@ -31,3 +31,12 @@ class TaskValidationError(PrimerError):
 
 class IsolationError(PrimerError):
     """Raised when network/proxy/container isolation cannot be guaranteed."""
+
+
+class HarnessValidityError(PrimerError):
+    """Raised when the WITH arm does not acknowledge the context file (M4 gate).
+
+    The fingerprint instruction planted in the context file was not found in
+    the agent's log output. The harness cannot certify that the agent read the
+    file. No delta is reported — abort, do not report (M4 ruling).
+    """

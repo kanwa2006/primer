@@ -56,7 +56,7 @@ def init(
 
     try:
         config = Settings(**overrides)
-        config.validate_runtime()
+        config.validate_generation_runtime()
     except ConfigError as exc:
         msg = str(exc)
         if "_API_KEY" in msg and "to be set" in msg:
@@ -223,6 +223,7 @@ def eval(  # noqa: A001
         task_list = derive_tasks(
             profile=profile,
             repo_path=repo_path,
+            config=config,
             n=config.primer_task_count,
             min_tasks=config.primer_min_tasks,
         )
@@ -237,7 +238,7 @@ def eval(  # noqa: A001
     # Step 4: Build eval image
     _console.print("[bold]4/5  Building eval image ...[/bold]")
     try:
-        image_tag = build_eval_image(repo_path, profile, config)
+        image_tag = build_eval_image(repo_path, profile, config, eval_adapter)
     except Exception as exc:
         typer.echo(f"Image build failed: {exc}", err=True)
         raise typer.Exit(code=1)
@@ -248,6 +249,7 @@ def eval(  # noqa: A001
         f"[bold]5/5  Running {len(task_list)} tasks x "
         f"{{without, with}} x {config.primer_eval_runs} runs (sequential) ...[/bold]"
     )
+    collected_runs: list = []
     try:
         score_report = run_score(
             profile=profile,
@@ -262,6 +264,7 @@ def eval(  # noqa: A001
             primer_overhead_usd=gen_result.usage.cost_usd,
             primer_overhead_confidence=gen_result.usage.cost_confidence,
             runs_per_config=config.primer_eval_runs,
+            collect_runs=collected_runs,
         )
     except Exception as exc:
         typer.echo(f"Eval failed: {exc}", err=True)
@@ -274,7 +277,7 @@ def eval(  # noqa: A001
             conn=conn,
             report=score_report,
             tasks=task_list,
-            runs=[],  # scorer consumed the individual RunResults internally
+            runs=collected_runs,
             profile=profile,
             repo_path=repo_path,
         )

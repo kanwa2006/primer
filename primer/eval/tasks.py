@@ -302,27 +302,59 @@ def _is_test_file(path: str) -> bool:
     )
 
 
+def _test_subject(name: str) -> str:
+    """Strip the test_ prefix / _test suffix and .py from a test file name.
+
+    `test_calculator.py` -> `calculator`; `agent_adapter_test.py` -> `agent_adapter`.
+    """
+    base = name[:-3] if name.endswith(".py") else name
+    if base.startswith("test_"):
+        base = base[len("test_"):]
+    elif base.endswith("_test"):
+        base = base[: -len("_test")]
+    return base
+
+
 def _find_covering_test(source_file: str, repo_path: str) -> str | None:
-    """Heuristic: find a test file whose name relates to the source file."""
+    """Select a test file with evidence of relevance to *source_file*.
+
+    A test is only eligible if the source file's stem appears in the test's
+    name (after stripping the test_/_test affixes). Two tiers, in order:
+
+      1. Exact stem match:  test_<stem>.py / <stem>_test.py
+      2. Fuzzy stem match:  every underscore-delimited token of <stem> is a
+         token of the test's subject (e.g. test_<stem>_edge_cases.py).
+
+    There is no arbitrary fallback: a test with no naming relationship to the
+    source file is never selected (it would not exercise the target module and
+    would be rejected by validate_task anyway). Returns None when nothing is
+    relevant. Selection is deterministic — candidates are sorted by path and
+    the first match in each tier wins.
+    """
     stem = Path(source_file).stem
     repo = Path(repo_path)
 
-    # Look for test files whose name contains the stem
-    candidates = list(repo.rglob(f"test_{stem}.py")) + list(repo.rglob(f"{stem}_test.py"))
-    candidates = [
-        f for f in candidates
-        if ".git" not in f.parts and "__pycache__" not in f.parts
-    ]
-    if candidates:
-        return str(candidates[0].relative_to(repo))
+    # All test files in the repo, sorted for deterministic selection.
+    test_files = sorted(
+        f
+        for f in list(repo.rglob("test_*.py")) + list(repo.rglob("*_test.py"))
+        if f.is_file() and ".git" not in f.parts and "__pycache__" not in f.parts
+    )
 
-    # Fallback: any test file in tests/
-    test_dirs = list(repo.rglob("tests")) + list(repo.rglob("test"))
-    for td in test_dirs:
-        if td.is_dir() and ".git" not in td.parts:
-            test_files = list(td.glob("test_*.py"))
-            if test_files:
-                return str(test_files[0].relative_to(repo))
+    stem_tokens = stem.split("_")
+
+    # Tier 1: exact stem match.
+    for f in test_files:
+        if f.name == f"test_{stem}.py" or f.name == f"{stem}_test.py":
+            return str(f.relative_to(repo))
+
+    # Tier 2: fuzzy stem match — all stem tokens present in the test subject.
+    for f in test_files:
+        subject_tokens = _test_subject(f.name).split("_")
+        if all(tok in subject_tokens for tok in stem_tokens):
+            return str(f.relative_to(repo))
+
+    # No evidence of relevance — refuse rather than pick an arbitrary test.
     return None
 
 

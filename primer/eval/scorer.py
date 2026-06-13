@@ -1,8 +1,9 @@
 """Scorer — aggregation, variance, and refuse-on-mismatch (AD-5, M3).
 
 score() runs all tasks × {without, with} × runs_per_config SEQUENTIALLY (Q1).
-For each run, a fresh context file is written (WITH) or omitted (WITHOUT)
-by the scorer before calling run_task, so the file management is centralised.
+For each run, context_content is threaded to run_task, which writes (WITH) or
+omits (WITHOUT) the context file directly in the cloned work_dir. The source
+repository is NEVER mutated (BLK-5).
 
 Honesty rules:
   - success_delta = None on provider/model mismatch (Q9d, AD-5)
@@ -20,9 +21,9 @@ import math
 import shutil
 import tempfile
 import time
-from pathlib import Path
 from typing import TYPE_CHECKING
 
+from primer.errors import HarnessValidityError
 from primer.eval.models import RunResult, ScoreReport, TaskScore
 from primer.eval.runner import run_task
 
@@ -54,6 +55,7 @@ def score(
     primer_overhead_usd: float = 0.0,
     primer_overhead_confidence: str = "estimated",
     runs_per_config: int = 3,
+    collect_runs: list[RunResult] | None = None,
 ) -> ScoreReport:
     """Run all tasks × {without, with} × runs_per_config and aggregate results.
 
@@ -62,6 +64,9 @@ def score(
 
     context_content: the text of the generated context file (CLAUDE.md).
     provider/model: the Layer-1 provider that generated the file (PRIMER overhead).
+    collect_runs: if a list is supplied, each RunResult is appended to it as it
+        is produced, giving the caller access to run-level data for persistence.
+        Callers that only need the ScoreReport may omit this parameter.
     """
     all_runs: list[RunResult] = []
     per_task_runs: dict[str, list[RunResult]] = {t.id: [] for t in tasks}
@@ -74,36 +79,31 @@ def score(
                     task.id, with_ctx, run_idx + 1, runs_per_config,
                 )
 
-                # Write or omit context file (scorer controls the file — AD-3)
-                context_path = _prepare_context(
-                    repo_path, adapter, context_content, with_ctx
+                # The runner writes the context file directly into the cloned
+                # work_dir; the source repo is NEVER touched (BLK-5). The scorer
+                # only threads the content through.
+                run_result = _run_with_retry(
+                    task=task,
+                    repo_path=repo_path,
+                    with_context=with_ctx,
+                    profile=profile,
+                    config=config,
+                    adapter=adapter,
+                    image_tag=image_tag,
+                    context_content=context_content,
                 )
-                # Write the context file into the work directory just before the run
-                # (runner.py will check its presence; scorer pre-stages it)
-                # Actually: runner clones the repo and mounts a temp dir.
-                # We pre-write the context file to the SOURCE repo so the clone picks it up,
-                # then ensure it's absent for WITHOUT runs.
-                source_context = Path(repo_path) / adapter.context_filename()
-                try:
-                    if with_ctx and context_content:
-                        source_context.write_text(context_content, encoding="utf-8")
-                    else:
-                        if source_context.exists():
-                            source_context.unlink()
 
-                    run_result = _run_with_retry(
-                        task=task,
-                        repo_path=repo_path,
-                        with_context=with_ctx,
-                        profile=profile,
-                        config=config,
-                        adapter=adapter,
-                        image_tag=image_tag,
+                # BLK-2: abort if the WITH arm did not acknowledge the context file
+                # (M4 harness-validity gate). False = marker absent = harness broken.
+                # None = adapter does not participate; never an abort condition.
+                if with_ctx and run_result.harness_fingerprint_valid is False:
+                    raise HarnessValidityError(
+                        f"WITH arm of task {task.id!r} (run {run_idx + 1}/{runs_per_config}) "
+                        f"did not acknowledge the context file — harness integrity failure. "
+                        f"No delta will be reported. "
+                        f"Verify the fingerprint instruction text "
+                        f"(see 16_BLK2_SPECIFICATION.md §4)."
                     )
-                finally:
-                    # Clean up: remove context file from source repo after run
-                    if source_context.exists():
-                        source_context.unlink()
 
                 # Fill in provider/model provenance (PRIMER brain, not agent)
                 run_result.provider = provider
@@ -111,6 +111,8 @@ def score(
 
                 all_runs.append(run_result)
                 per_task_runs[task.id].append(run_result)
+                if collect_runs is not None:
+                    collect_runs.append(run_result)
 
     # ----- Aggregate ---------------------------------------------------------
     return _aggregate(
@@ -135,6 +137,7 @@ def _run_with_retry(
     config: "Settings",
     adapter: "AgentAdapter",
     image_tag: str,
+    context_content: str = "",
 ) -> RunResult:
     """Q2 flaky policy: if verify_cmd fails first run, retry once after 5s.
 
@@ -149,6 +152,7 @@ def _run_with_retry(
         config=config,
         adapter=adapter,
         image_tag=image_tag,
+        context_content=context_content,
     )
 
     if not result.passed and not result.timeout:
@@ -162,6 +166,7 @@ def _run_with_retry(
             config=config,
             adapter=adapter,
             image_tag=image_tag,
+            context_content=context_content,
         )
         if retry_result.passed:
             # Fail-then-pass → flaky=True, passed=True
@@ -173,18 +178,6 @@ def _run_with_retry(
             return retry_result
 
     return result
-
-
-def _prepare_context(
-    repo_path: str,
-    adapter: "AgentAdapter",
-    content: str,
-    with_ctx: bool,
-) -> Path | None:
-    """Return the context file path; the actual write/delete is done by caller."""
-    if with_ctx and content:
-        return Path(repo_path) / adapter.context_filename()
-    return None
 
 
 def _aggregate(

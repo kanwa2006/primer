@@ -18,7 +18,7 @@ import sqlite3
 log = logging.getLogger(__name__)
 
 # Bump this when a new migration is added.
-CURRENT_SCHEMA_VERSION = 1
+CURRENT_SCHEMA_VERSION = 2
 
 # SchemaTooNewError: raised when the db was written by a newer PRIMER.
 class SchemaTooNewError(Exception):
@@ -77,12 +77,35 @@ def apply_migrations(conn: sqlite3.Connection) -> None:
         set_schema_version(conn, 1)
         log.info("applied migration v1")
 
+    if current < 2:
+        _migration_v2(conn)
+        set_schema_version(conn, 2)
+        log.info("applied migration v2")
+
     log.info("schema at v%d", CURRENT_SCHEMA_VERSION)
 
 
 # ---------------------------------------------------------------------------
 # Individual migration steps
 # ---------------------------------------------------------------------------
+
+def _migration_v2(conn: sqlite3.Connection) -> None:
+    """v1 → v2: add harness_fingerprint_valid column to runs (BLK-2 / M4 gate).
+
+    Additive, backward-compatible. Existing rows have NULL (= not checked).
+    Idempotent: safe to re-run on a db that already has the column.
+    """
+    try:
+        conn.execute(
+            "ALTER TABLE runs ADD COLUMN harness_fingerprint_valid INTEGER"
+        )
+        conn.commit()
+    except sqlite3.OperationalError as exc:
+        if "duplicate column name" in str(exc).lower():
+            pass  # already applied — idempotent
+        else:
+            raise
+
 
 def _migration_v1(conn: sqlite3.Connection) -> None:
     """v0 -> v1: baseline schema (tables already applied via schema.sql).

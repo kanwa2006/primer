@@ -35,11 +35,13 @@ class AgentAdapter(ABC):
         """Short name identifying this adapter (e.g. 'claude_code')."""
 
     @abstractmethod
-    def required_env_key(self) -> str:
+    def required_env_key(self) -> str | None:
         """The single environment variable injected into the eval container.
 
         Only this one key is passed via --env. PRIMER's other keys are never
-        injected (Q10 / Spec B step 5).
+        injected (Q10 / Spec B step 5). Return None for an agent that needs no
+        key (e.g. a local/offline agent); config validation then skips the
+        agent-key check for that adapter.
         """
 
     @abstractmethod
@@ -79,3 +81,45 @@ class AgentAdapter(ABC):
         - raw_log has already been redacted by runner.py before this call.
         - Returns AgentTelemetry with sensible defaults if parsing fails.
         """
+
+    def image_layers(self) -> list[str]:
+        """Return Dockerfile instruction strings required to install this agent's CLI.
+
+        Each string is appended as a Dockerfile instruction line to the eval image
+        Dockerfile during the build phase (AD-2). Lines are typically RUN or ENV
+        instructions. The build phase runs with host networking so external package
+        repositories are reachable; the eval run step does not.
+
+        The default returns no layers — adapters whose CLI is already present in the
+        base image need not override this method. Adapters that must provision a CLI
+        (e.g. ClaudeCodeAdapter) return the required installation instructions here.
+        """
+        return []
+
+    def fingerprint_instruction(self) -> str | None:
+        """Return the instruction text to append to the context file for the WITH arm.
+
+        The runner appends the returned string (on its own line) to context_content
+        before writing context_file_path. Returns None if the adapter does not
+        participate in the fingerprint gate (BLK-2 / M4).
+
+        The ClaudeCodeAdapter override returns the full directive text. Adapters that
+        do not override this method are exempt from the harness-validity gate.
+        """
+        return None
+
+    def check_fingerprint(self, raw_log: str, with_context: bool) -> bool | None:
+        """Check whether the agent acknowledged the fingerprint instruction (M4 gate).
+
+        Args:
+            raw_log: the already-redacted agent log string from LLMProvider.log_safe().
+            with_context: True for the WITH arm; False for the WITHOUT arm.
+
+        Returns:
+            True  — WITH arm; marker found; harness valid for this run.
+            False — WITH arm; marker absent; harness failure; scorer must abort.
+            None  — WITHOUT arm (gate not applicable), OR adapter does not participate.
+
+        Must not raise. The default implementation always returns None.
+        """
+        return None

@@ -87,6 +87,12 @@ class RunResult:
     agent_log_path: str          # path to REDACTED agent log on disk
     run_timestamp: str           # ISO-8601 UTC
 
+    # --- harness-validity fingerprint gate (BLK-2 / M4) ---
+    # True: WITH arm; marker found; harness valid.
+    # False: WITH arm; marker absent; scorer aborts (HarnessValidityError).
+    # None: WITHOUT arm (not applicable), or adapter does not participate.
+    harness_fingerprint_valid: bool | None = None
+
 
 @dataclass
 class TaskScore:

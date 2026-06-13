@@ -3,7 +3,8 @@
 run_task() executes the full Spec B isolation sequence:
   1. Fresh clone @ repo_commit → record repo_commit
   2. Apply task.mutation (failing start state)
-  3. Write / omit context_filename (with_context flag; flags identical both arms)
+  3. Write / omit context_filename from the context_content parameter
+     (with_context flag; flags identical both arms; source repo never touched — BLK-5)
   4. EgressNetwork up (internal net + proxy sidecar)
   5. Start eval container on primer-internal only, one key via --env,
      cap_drop=ALL, no-new-privileges, mem_limit, nano_cpus, pids_limit
@@ -60,11 +61,16 @@ def run_task(
     config: "Settings",
     adapter: "AgentAdapter",
     image_tag: str,
+    context_content: str = "",
 ) -> RunResult:
     """Execute one task arm (with or without context) in full isolation.
 
     This is the fat runner — all Docker, network, timeout, and cleanup
     logic lives here (AD-3). Adapters supply invocation details only.
+
+    context_content: text to write as the context file in the WITH arm.
+    The source repository is NEVER written to; the file is created directly
+    in the cloned work_dir (BLK-5).
 
     Returns a RunResult with passed determined solely by verify_cmd exit code.
     """
@@ -77,6 +83,7 @@ def run_task(
     timed_out = False
     flaky = False
     exit_code = -1
+    fingerprint_valid: bool | None = None  # BLK-2: set after Step 8 log read
 
     # Spec D: docker client timeout > eval timeout
     client = docker.from_env(timeout=config.docker_client_timeout_s)
@@ -91,13 +98,28 @@ def run_task(
 
         # ----- Step 3: Write / omit context file (flags identical both arms) ----
         context_file_path = work_dir / adapter.context_filename()
+
+        # C3: warn when the cloned repo already contains a committed context file.
+        # WITHOUT arm removes it; WITH arm overwrites it. Evaluation continues normally.
+        if context_file_path.exists():
+            log.warning(
+                "Committed %s detected in repository clone. "
+                "WITHOUT arm: will be removed. WITH arm: will be overwritten. "
+                "Evaluation continues normally.",
+                adapter.context_filename(),
+            )
+
         if with_context:
-            if not context_file_path.exists():
-                raise RuntimeError(
-                    f"Context file expected at {context_file_path} but was not found. "
-                    "Call run_task with a pre-written context file or generate it first."
-                )
-            # File is already written by the caller (scorer) before run_task
+            # WITH arm: the runner is the authority on the context file. Write
+            # context_content directly into the cloned work_dir (created by
+            # _clone_repo in Step 1). The source repository is NEVER touched (BLK-5).
+            # BLK-2: append the adapter's fingerprint instruction (M4 gate).
+            fingerprint_text = adapter.fingerprint_instruction()
+            effective_content = context_content
+            if fingerprint_text:
+                separator = "\n" if context_content.endswith("\n") else "\n\n"
+                effective_content = context_content + separator + fingerprint_text + "\n"
+            context_file_path.write_text(effective_content, encoding="utf-8")
         else:
             # WITHOUT arm: guarantee context file does not exist
             if context_file_path.exists():
@@ -132,15 +154,18 @@ def run_task(
             agent_argv = adapter.build_invocation(task)
             agent_cmd = " ".join(_shell_quote(a) for a in agent_argv)
             verify_cmd = task.verify_cmd
-            # Command ends with verify_cmd so exit code = verify_cmd exit code (Spec B-9, AD-4)
-            full_cmd = (
-                f"sh -c '{agent_cmd} > {_AGENT_LOG_PATH} 2>&1 ; {verify_cmd}'"
-            )
+            # Command ends with verify_cmd so exit code = verify_cmd exit code (Spec B-9, AD-4).
+            # Passed as ["sh", "-c", script] (list) so Docker SDK does NOT call shlex.split()
+            # on the string before sending to the daemon.  A string command causes shlex.split
+            # to tokenise the outer sh -c '...' wrapper, breaking multi-word prompts and losing
+            # the redirect and verify_cmd entirely.  With a list, the daemon receives
+            # Cmd: ["sh", "-c", <script>] and the shell parses <script> directly.
+            sh_script = f"{agent_cmd} > {_AGENT_LOG_PATH} 2>&1 ; {verify_cmd}"
 
             # ----- Start container on internal network -----------------------
             container = client.containers.run(
                 image_tag,
-                command=full_cmd,
+                command=["sh", "-c", sh_script],
                 working_dir="/work",
                 volumes={str(work_dir): {"bind": "/work", "mode": "rw"}},
                 network=egress_info.network_name,
@@ -192,6 +217,11 @@ def run_task(
             # Parse telemetry (NO pass/fail — AD-4)
             telemetry = adapter.parse_telemetry(redacted_log)
 
+            # BLK-2: harness-validity fingerprint check (M4 gate, Probe A / C).
+            # Runs for every arm; check_fingerprint returns None for WITHOUT arm
+            # and for adapters that do not participate. Must not raise.
+            fingerprint_valid = adapter.check_fingerprint(redacted_log, with_context)
+
     finally:
         # ----- Step 9: Cleanup — idempotent and defensive (Spec D finally) ----
         if container is not None:
@@ -218,6 +248,7 @@ def run_task(
         timeout=timed_out,
         flaky=flaky,
         with_context=with_context,
+        harness_fingerprint_valid=fingerprint_valid,
         # eval-agent cost stream
         agent_adapter=adapter.adapter_name,
         agent_tokens=telemetry.tokens,

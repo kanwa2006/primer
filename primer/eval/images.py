@@ -21,6 +21,7 @@ import docker
 
 if TYPE_CHECKING:
     from primer.config import Settings
+    from primer.eval.agent_adapter import AgentAdapter
 
 log = logging.getLogger(__name__)
 
@@ -29,21 +30,25 @@ def build_eval_image(
     repo_path: str,
     profile,
     config: "Settings",
+    adapter: "AgentAdapter",
 ) -> str:
-    """Build or reuse a deps-only eval image for the given repo.
+    """Build or reuse a deps-only eval image for the given repo and agent.
 
-    Returns the image tag string (primer-eval-<repohash>:<commit>).
+    Returns the image tag string (primer-eval-<repohash>-<agent>:<commit>).
 
     AD-2: deps are pre-baked so `pip install` costs no eval-timeout budget.
     M5: base image is built FROM the resolved sha256 digest.
     Source is NOT copied into the image — it is mounted per run.
+    The agent name is included in the tag so that images built for different
+    agents do not collide in the Docker cache (BLK-1).
     """
     repo = Path(repo_path)
     repo_commit = profile.repo_commit
 
-    # Derive a short hash of the repo path for a stable image name
+    # Derive a short hash of the repo path for a stable image name.
+    # Agent name is included to prevent cache collisions across different agents.
     repo_hash = hashlib.sha1(str(repo.resolve()).encode()).hexdigest()[:12]
-    image_tag = f"primer-eval-{repo_hash}:{repo_commit[:12]}"
+    image_tag = f"primer-eval-{repo_hash}-{adapter.adapter_name}:{repo_commit[:12]}"
 
     client = docker.from_env(timeout=config.docker_client_timeout_s)
 
@@ -61,8 +66,8 @@ def build_eval_image(
     base_digest = _resolve_digest(client, config.docker_base_image)
     log.info("base image digest: %s", base_digest)
 
-    # Build a minimal Dockerfile that only installs deps
-    dockerfile_content = _make_eval_dockerfile(repo, base_digest, profile)
+    # Build a minimal Dockerfile that installs deps and provisions the agent CLI
+    dockerfile_content = _make_eval_dockerfile(repo, base_digest, profile, adapter)
 
     with tempfile.TemporaryDirectory(prefix="primer_build_") as build_ctx:
         ctx = Path(build_ctx)
@@ -120,8 +125,13 @@ def _make_eval_dockerfile(
     repo: Path,
     base_digest: str,
     profile,
+    adapter: "AgentAdapter",
 ) -> str:
-    """Generate Dockerfile content for the deps-only eval image."""
+    """Generate Dockerfile content for the eval image.
+
+    Installs project deps (pip) and pytest, then appends any agent-specific
+    installation layers from adapter.image_layers() (BLK-1).
+    """
     lines = [f"FROM {base_digest}"]
     lines.append("WORKDIR /work")
 
@@ -148,6 +158,12 @@ def _make_eval_dockerfile(
 
     # Ensure pytest is installed even if the project install missed it
     lines.append("RUN pip install --no-cache-dir pytest pytest-timeout 2>/dev/null || true")
+
+    # Append agent-specific installation layers (e.g. Claude Code CLI via apt).
+    # For adapters with no provisioning requirements, image_layers() returns []
+    # and no lines are added (backward-compatible, no-op for those adapters).
+    for layer in adapter.image_layers():
+        lines.append(layer)
 
     return "\n".join(lines) + "\n"
 

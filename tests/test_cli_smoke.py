@@ -39,29 +39,24 @@ class TestHelp:
         assert result.exit_code == 0
 
 
-class TestStubs:
-    """Each stub command exits 2 and prints a 'not yet implemented' notice."""
+class TestImplemented:
+    """Commands init, eval, and report are real implementations.
 
-    def test_init_exits_2(self):
+    When API keys are configured (via .env), none of the commands should
+    fall back to the legacy stub path (exit 2 / "not yet implemented").
+    """
+
+    def test_init_proceeds_past_stub_gate(self):
         result = runner.invoke(app, ["init"])
-        assert result.exit_code == 2
+        assert result.exit_code != 2
+        assert "not yet implemented" not in result.output.lower()
 
-    def test_init_prints_notice(self):
-        result = runner.invoke(app, ["init"])
-        assert "not yet implemented" in result.output.lower()
-
-    def test_eval_exits_2(self):
+    def test_eval_proceeds_past_stub_gate(self):
         result = runner.invoke(app, ["eval"])
-        assert result.exit_code == 2
+        assert result.exit_code != 2
+        assert "not yet implemented" not in result.output.lower()
 
-    def test_eval_prints_notice(self):
-        result = runner.invoke(app, ["eval"])
-        assert "not yet implemented" in result.output.lower()
-
-    def test_report_exits_2(self):
+    def test_report_proceeds_past_stub_gate(self):
         result = runner.invoke(app, ["report"])
-        assert result.exit_code == 2
-
-    def test_report_prints_notice(self):
-        result = runner.invoke(app, ["report"])
-        assert "not yet implemented" in result.output.lower()
+        assert result.exit_code != 2
+        assert "not yet implemented" not in result.output.lower()

@@ -2,9 +2,11 @@
 from __future__ import annotations
 
 from primer.eval.adapters.claude_code import ClaudeCodeAdapter
+from primer.eval.adapters.gemini import GeminiAdapter
 
 _REGISTRY: dict[str, type] = {
     "claude_code": ClaudeCodeAdapter,
+    "gemini": GeminiAdapter,
 }
 
 

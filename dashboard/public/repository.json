@@ -3,28 +3,73 @@
   "kind": "repository",
   "repo": {
     "name": "primer",
-    "url": null,
-    "latest_commit": "example000000000"
+    "url": "https://github.com/kanwa2006/primer",
+    "latest_commit": "4498309093b11134d6f91c875db3d876e017861b"
   },
-  "latest_evaluation_id": 1,
-  "latest_verdict": "positive",
-  "evaluation_count": 1,
+  "latest_evaluation_id": 4,
+  "latest_verdict": "within-noise",
+  "evaluation_count": 4,
   "evaluations": [
     {
-      "id": 1,
-      "repo_commit": "example000000000",
-      "created_at": "2026-05-31T13:00:00Z",
-      "verdict": "positive",
-      "success_delta": 0.2,
-      "success_stddev": 0.05,
+      "id": 4,
+      "repo_commit": "4498309093b11134d6f91c875db3d876e017861b",
+      "created_at": "2026-06-13T17:30:00.077216+00:00",
+      "verdict": "within-noise",
+      "success_delta": 0.0,
+      "success_stddev": 0.0,
       "n_tasks": 5,
       "runs_per_config": 3,
       "noise_threshold": 0.2,
-      "provider": "anthropic",
-      "model": "claude-sonnet-4-6",
-      "agent_adapter": "claude_code",
-      "egress_enforced": true
+      "provider": "gemini",
+      "model": "gemini-2.5-flash",
+      "agent_adapter": "gemini",
+      "egress_enforced": false
+    },
+    {
+      "id": 3,
+      "repo_commit": "4498309093b11134d6f91c875db3d876e017861b",
+      "created_at": "2026-06-13T16:16:21.640076+00:00",
+      "verdict": "within-noise",
+      "success_delta": 0.0,
+      "success_stddev": 0.0,
+      "n_tasks": 5,
+      "runs_per_config": 3,
+      "noise_threshold": 0.2,
+      "provider": "gemini",
+      "model": "gemini-2.5-flash",
+      "agent_adapter": "gemini",
+      "egress_enforced": false
+    },
+    {
+      "id": 2,
+      "repo_commit": "4498309093b11134d6f91c875db3d876e017861b",
+      "created_at": "2026-06-13T15:00:20.643922+00:00",
+      "verdict": "within-noise",
+      "success_delta": 0.0,
+      "success_stddev": 0.0,
+      "n_tasks": 5,
+      "runs_per_config": 3,
+      "noise_threshold": 0.2,
+      "provider": "gemini",
+      "model": "gemini-2.5-flash",
+      "agent_adapter": "gemini",
+      "egress_enforced": false
+    },
+    {
+      "id": 1,
+      "repo_commit": "4498309093b11134d6f91c875db3d876e017861b",
+      "created_at": "2026-06-05T09:36:48.683584+00:00",
+      "verdict": "within-noise",
+      "success_delta": 0.0,
+      "success_stddev": 0.0,
+      "n_tasks": 5,
+      "runs_per_config": 3,
+      "noise_threshold": 0.2,
+      "provider": "gemini",
+      "model": "gemini-2.5-flash",
+      "agent_adapter": "gemini",
+      "egress_enforced": false
     }
   ],
-  "generated_at": "2026-05-31T13:00:00Z"
+  "generated_at": "2026-06-13T19:31:07Z"
 }

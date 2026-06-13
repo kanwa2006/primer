@@ -3,7 +3,12 @@
 
 # detect-secrets baseline: hashed_secret values are SHA-1 hashes of secrets,
 # not secrets themselves.
-.secrets.baseline:generic-api-key:130
+.secrets.baseline:generic-api-key:134
+.secrets.baseline:generic-api-key:143
+.secrets.baseline:generic-api-key:152
+.secrets.baseline:generic-api-key:161
+.secrets.baseline:generic-api-key:170
+.secrets.baseline:generic-api-key:179
 
 # test_security_scaffold.py plants a dummy key to verify the hooks work.
 # This is intentional test data, not a real credential.

@@ -61,10 +61,10 @@ function EvalCompareFetch({ idA, idB }: { idA: number; idB: number }) {
     return (
       <div className="flex flex-col gap-6">
         <div
-          className="flex items-start gap-3 px-4 py-3 rounded border border-red-300/30 bg-red-500/5"
+          className="flex items-start gap-3 px-4 py-3 rounded-md border border-[var(--verdict-negative-border)] bg-[var(--verdict-negative-bg)]"
           role="alert"
         >
-          <p className="text-red-400 text-xs leading-relaxed font-mono">{state.message}</p>
+          <p className="text-[var(--verdict-negative-fg)] text-xs leading-relaxed font-mono">{state.message}</p>
         </div>
         <EvalPickerFetch idA={null} idB={null} />
       </div>
@@ -103,7 +103,7 @@ function EvalPickerFetch({
 
   if (error) {
     return (
-      <div className="text-xs font-mono text-red-400 py-4" role="alert">
+      <div className="text-xs font-mono text-[var(--verdict-negative-fg)] py-4" role="alert">
         Failed to load evaluations: {error}
       </div>
     );
@@ -116,7 +116,7 @@ function EvalPickerFetch({
 
 function Spinner() {
   return (
-    <div className="text-zinc-500 text-xs font-mono py-8 text-center animate-pulse">
+    <div className="text-[var(--text-tertiary)] text-xs font-mono py-8 text-center animate-pulse">
       Loading…
     </div>
   );
@@ -124,19 +124,18 @@ function Spinner() {
 
 export default function ComparePage() {
   return (
-    <main className="max-w-5xl mx-auto px-6 py-10">
+    <div className="max-w-5xl mx-auto px-6 py-10">
       <div className="flex flex-col gap-8">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-xl font-semibold tracking-tight text-zinc-900">
-            Compare evaluations
-          </h1>
-          <p className="text-xs font-mono text-zinc-500">
+        <div className="flex flex-col gap-2">
+          <p className="t-eyebrow">Diff</p>
+          <h1 className="t-h1 text-[var(--text-primary)]">Compare evaluations</h1>
+          <p className="t-lead max-w-[52ch]">
             Side-by-side provenance diff and cross-evaluation delta.
           </p>
         </div>
         <Suspense
           fallback={
-            <div className="text-zinc-500 text-xs font-mono py-8 text-center animate-pulse">
+            <div className="text-[var(--text-tertiary)] text-xs font-mono py-8 text-center animate-pulse">
               Loading…
             </div>
           }
@@ -144,6 +143,6 @@ export default function ComparePage() {
           <CompareContent />
         </Suspense>
       </div>
-    </main>
+    </div>
   );
 }

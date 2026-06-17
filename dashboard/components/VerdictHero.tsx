@@ -1,17 +1,13 @@
 "use client";
 
 import { motion } from "motion/react";
-import { verdictWord, verdictIcon } from "@/lib/format";
+import { TrendingUp, TrendingDown, Minus, Ban } from "lucide-react";
+import { DeltaCountUp } from "@/components/DeltaCountUp";
+import { InstrumentCard } from "@/components/InstrumentCard";
+import { noiseThreshold, verdictTextClass, VERDICT_WORD } from "@/lib/verdict";
 import type { DashboardData, VerdictLabel } from "@/lib/types";
 
-// ─── Display maps (all logic local per B.3 spec) ─────────────────────────────
-
-function formatHeroDelta(delta: number | null): string {
-  if (delta === null) return "N/A";
-  const pp = (delta * 100).toFixed(1);
-  if (delta > 0) return `+${pp} pp`;
-  return `${pp} pp`;
-}
+// ─── Interpretation copy (spec §13.4) ────────────────────────────────────────
 
 function interpretationCopy(verdict: VerdictLabel, delta: number | null): string {
   switch (verdict) {
@@ -35,137 +31,144 @@ function interpretationCopy(verdict: VerdictLabel, delta: number | null): string
   }
 }
 
-// ─── Per-verdict class helpers ────────────────────────────────────────────────
+const ICONS = {
+  positive:       TrendingUp,
+  negative:       TrendingDown,
+  "within-noise": Minus,
+  refused:        Ban,
+} as const;
 
-function leftBorderClass(v: VerdictLabel): string {
-  if (v === "positive") return "border-l-positive";
-  if (v === "negative") return "border-l-negative";
-  return "border-l-zinc-300";
-}
-
-function cardBgClass(v: VerdictLabel): string {
-  if (v === "positive") return "bg-positive/10";
-  if (v === "negative") return "bg-negative/10";
-  return "bg-zinc-50";
-}
-
-function headingTextClass(v: VerdictLabel): string {
-  if (v === "positive") return "text-emerald-700";
-  if (v === "negative") return "text-red-700";
-  return "text-zinc-500";
-}
-
-function deltaTextClass(v: VerdictLabel): string {
-  if (v === "positive") return "text-emerald-700";
-  if (v === "negative") return "text-red-700";
-  if (v === "within-noise") return "text-zinc-700";
-  return "text-zinc-500";
-}
-
-// ─── Confidence Ruler ────────────────────────────────────────────────────────
+// ─── Confidence Ruler — the signature instrument (caliper) ───────────────────
 
 interface ConfidenceRulerProps {
-  delta: number;          // proportion — e.g. 0.18 means 18 pp
-  noiseThreshold: number; // proportion — e.g. 0.20 means 20 pp
+  delta: number;
+  noiseThresholdProp: number;
   verdict: VerdictLabel;
 }
 
-function ConfidenceRuler({ delta, noiseThreshold, verdict }: ConfidenceRulerProps) {
+function ConfidenceRuler({ delta, noiseThresholdProp, verdict }: ConfidenceRulerProps) {
   const absDelta = Math.abs(delta);
-
-  // Range in proportion space — always shows noise zone comfortably; delta never clips
-  const range = Math.max(noiseThreshold * 2.8, absDelta * 1.5, 0.20);
-
-  // Proportion value → 0–100% position on the bar, clamped away from edges
+  const range = Math.max(noiseThresholdProp * 2.8, absDelta * 1.5, 0.2);
   const toPct = (x: number) =>
-    Math.min(97, Math.max(3, ((x + range) / (2 * range)) * 100));
+    Math.min(98, Math.max(2, ((x + range) / (2 * range)) * 100));
 
-  const noiseL  = toPct(-noiseThreshold);
-  const noiseR  = toPct(noiseThreshold);
+  const noiseL  = toPct(-noiseThresholdProp);
+  const noiseR  = toPct(noiseThresholdProp);
   const zeroPct = toPct(0);
   const dotPct  = toPct(delta);
-
-  const threshPp  = (noiseThreshold * 100).toFixed(1);
+  const threshPp   = (noiseThresholdProp * 100).toFixed(1);
   const absDeltaPp = (absDelta * 100).toFixed(1);
   const sign = delta > 0 ? "+" : delta < 0 ? "−" : "";
 
-  const dotBgClass =
-    verdict === "positive" ? "bg-positive" :
-    verdict === "negative" ? "bg-negative" :
-    "bg-zinc-500";
+  const dotColor =
+    verdict === "positive" ? "var(--verdict-positive-fg)" :
+    verdict === "negative" ? "var(--verdict-negative-fg)" :
+    "var(--verdict-noise-fg)";
 
   const caption =
     verdict === "within-noise"
       ? `Delta ${sign}${absDeltaPp} pp falls inside the noise envelope (±${threshPp} pp)`
       : `Delta ${sign}${absDeltaPp} pp  ·  noise envelope ±${threshPp} pp`;
 
+  // Engraved tick array — minor ticks across the scale, majors at 0 and ±threshold.
+  const N = 32;
+  const ticks = Array.from({ length: N + 1 }, (_, i) => {
+    const pct = (i / N) * 100;
+    // distance (in pct) to a labelled major position
+    const nearMajor =
+      Math.abs(pct - zeroPct) < 0.8 ||
+      Math.abs(pct - noiseL) < 0.8 ||
+      Math.abs(pct - noiseR) < 0.8;
+    return { pct, nearMajor };
+  });
+
   return (
-    <div
-      className="flex flex-col gap-2 pt-1"
-      role="img"
-      aria-label={caption}
-    >
-      {/* Track */}
-      <div className="relative h-7 flex items-center" aria-hidden="true">
-        {/* Base track */}
-        <div className="w-full h-1.5 rounded-full bg-zinc-200 relative overflow-hidden">
-          {/* Noise band — draws in from centre (same timing regardless of verdict) */}
-          <motion.div
-            className="absolute inset-y-0 bg-zinc-300/80"
-            style={{ left: `${noiseL}%` }}
-            initial={{ width: "0%" }}
-            animate={{ width: `${noiseR - noiseL}%` }}
-            transition={{ duration: 0.32, delay: 0.12, ease: [0.16, 1, 0.3, 1] }}
-          />
-        </div>
+    <figure className="flex flex-col gap-2.5 m-0" role="img" aria-label={caption}>
+      {/* Machined caliper panel — recessed track, engraved scale */}
+      <div
+        className="relative rounded-md border border-[var(--border-hairline)] bg-[var(--surface-base)] px-4 pt-5 pb-4"
+        style={{ boxShadow: "var(--ruler-recess)" }}
+        aria-hidden="true"
+      >
+        <div className="relative h-12">
+          {/* Engraved ticks — theme-tuned tokens keep depth in both modes */}
+          {ticks.map(({ pct, nearMajor }, i) => (
+            <span
+              key={i}
+              className="absolute top-0 w-px"
+              style={{
+                left: `${pct}%`,
+                height: nearMajor ? 16 : 9,
+                background: nearMajor ? "var(--ruler-tick-major)" : "var(--ruler-tick)",
+              }}
+            />
+          ))}
 
-        {/* Zero tick */}
-        <div
-          className="absolute h-4 w-px bg-zinc-400/60"
-          style={{ left: `${zeroPct}%` }}
-        />
-
-        {/* Delta marker — outer div positions, inner motion.div animates */}
-        <div
-          className="absolute"
-          style={{ left: `${dotPct}%`, transform: "translateX(-50%)" }}
-        >
+          {/* Active measurement zone — the noise envelope, expands from zero */}
           <motion.div
-            className={`w-3 h-3 rounded-full ${dotBgClass} ring-2 ring-white shadow-sm`}
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.32, delay: 0.30, ease: [0.16, 1, 0.3, 1] }}
+            className="absolute top-0 h-4 rounded-[3px]"
+            style={{
+              left: `${noiseL}%`,
+              width: `${noiseR - noiseL}%`,
+              transformOrigin: "center",
+              background:
+                "linear-gradient(180deg, var(--accent-glow), transparent), var(--surface-raised)",
+              borderLeft: "1px solid var(--accent-signal)",
+              borderRight: "1px solid var(--accent-signal)",
+              opacity: 0.9,
+            }}
+            initial={{ scaleX: 0, opacity: 0 }}
+            animate={{ scaleX: 1, opacity: 0.9 }}
+            transition={{ duration: 0.5, delay: 0.12, ease: [0.32, 0.72, 0, 1] }}
           />
+
+          {/* Zero datum line */}
+          <div
+            className="absolute top-[-2px] w-px h-[22px] bg-[var(--text-secondary)]"
+            style={{ left: `${zeroPct}%`, opacity: 0.6 }}
+          />
+
+          {/* Caliper indicator blade — seats at the reading with a slight overshoot */}
+          <motion.div
+            className="absolute top-[-4px]"
+            style={{ left: `${dotPct}%`, transform: "translateX(-50%)" }}
+            initial={{ opacity: 0, scaleY: 0.3, y: -2 }}
+            animate={{ opacity: 1, scaleY: 1, y: 0 }}
+            transition={{
+              duration: 0.42,
+              delay: 0.34,
+              ease: [0.32, 0.72, 0, 1],
+            }}
+          >
+            <div
+              className="w-px h-[26px] mx-auto"
+              style={{ background: dotColor, boxShadow: `0 0 6px ${dotColor}` }}
+            />
+            <motion.div
+              className="w-3 h-3 rounded-full mx-auto -mt-[7px] ring-2 ring-[var(--surface-base)]"
+              style={{ background: dotColor, boxShadow: `0 0 10px ${dotColor}55` }}
+              initial={{ scale: 0 }}
+              animate={{ scale: [0, 1.18, 1] }}
+              transition={{ duration: 0.3, delay: 0.46, ease: [0.32, 0.72, 0, 1] }}
+            />
+          </motion.div>
         </div>
       </div>
 
-      {/* Axis labels */}
+      {/* Scale labels */}
       <div className="relative h-4 select-none" aria-hidden="true">
-        <span
-          className="absolute text-[10px] font-mono text-zinc-400 -translate-x-1/2"
-          style={{ left: `${Math.max(7, noiseL)}%` }}
-        >
-          −{threshPp}pp
-        </span>
-        <span
-          className="absolute text-[10px] font-mono text-zinc-400 -translate-x-1/2"
-          style={{ left: `${zeroPct}%` }}
-        >
-          0
-        </span>
-        <span
-          className="absolute text-[10px] font-mono text-zinc-400 -translate-x-1/2"
-          style={{ left: `${Math.min(93, noiseR)}%` }}
-        >
-          +{threshPp}pp
-        </span>
+        <span className="absolute t-data text-[10px] text-[var(--text-tertiary)] -translate-x-1/2"
+          style={{ left: `${Math.max(6, noiseL)}%` }}>−{threshPp}</span>
+        <span className="absolute t-data text-[10px] text-[var(--text-secondary)] -translate-x-1/2"
+          style={{ left: `${zeroPct}%` }}>0</span>
+        <span className="absolute t-data text-[10px] text-[var(--text-tertiary)] -translate-x-1/2"
+          style={{ left: `${Math.min(94, noiseR)}%` }}>+{threshPp}</span>
       </div>
 
-      {/* Caption */}
-      <p className="text-[11px] font-mono text-zinc-500 leading-snug">
+      <figcaption className="t-data text-[11px] text-[var(--text-tertiary)] leading-snug">
         {caption}
-      </p>
-    </div>
+      </figcaption>
+    </figure>
   );
 }
 
@@ -177,65 +180,60 @@ interface VerdictHeroProps {
 
 export function VerdictHero({ data }: VerdictHeroProps) {
   const { verdict, success_delta, n_tasks, success_stddev, runs_per_config } = data;
-  const noiseThreshold = Math.max(1 / n_tasks, success_stddev);
+  const nt = noiseThreshold(success_stddev, n_tasks);
   const showRuler = verdict !== "refused" && success_delta !== null;
   const v = verdict as VerdictLabel;
+  const Icon = ICONS[v];
 
   return (
-    <motion.div
-      className={`relative flex flex-col gap-5 rounded-lg border border-zinc-200 border-l-4 px-6 sm:px-8 py-8 sm:py-10 ${leftBorderClass(v)} ${cardBgClass(v)}`}
-      initial={{ opacity: 0, y: 14 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+    <InstrumentCard
+      lift={false}
+      glow
       role="region"
-      aria-label={`Verdict: ${verdictWord(v)}`}
+      aria-label={`Verdict: ${VERDICT_WORD[v]}`}
+      className="flex flex-col gap-6 px-6 sm:px-8 py-8 sm:py-10 backdrop-blur-xl bg-[var(--surface-elevated)]/75 shadow-hero"
     >
-      {/* Verdict word + icon (word-first, never color-alone) + delta — staggered reveal */}
-      <div className="flex flex-col gap-2">
-        {/* Word + icon: first in at delay 0 — identical timing regardless of verdict */}
+      <div className="flex flex-col gap-3">
+        {/* Verdict word + icon */}
         <motion.span
-          className={`flex items-center gap-2 text-lg sm:text-xl font-semibold tracking-tight ${headingTextClass(v)}`}
+          className={`flex items-center gap-2 t-h3 ${verdictTextClass(v)}`}
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.28, delay: 0.04, ease: [0.16, 1, 0.3, 1] }}
         >
-          <span aria-hidden="true">{verdictIcon(v)}</span>
-          {verdictWord(v)}
+          <Icon size={20} strokeWidth={1.75} aria-hidden />
+          {VERDICT_WORD[v]}
         </motion.span>
 
-        {/* Delta number: enters just after the word */}
-        <motion.span
-          className={`text-6xl sm:text-7xl md:text-8xl font-mono font-semibold tracking-tight leading-none whitespace-nowrap ${deltaTextClass(v)}`}
-          aria-label={`Success delta: ${formatHeroDelta(success_delta)} percentage points`}
+        {/* Delta — the instrument readout */}
+        <motion.div
+          className="t-data text-6xl sm:text-7xl md:text-8xl font-semibold tracking-tight leading-none"
+          aria-label={`Success delta: ${success_delta !== null ? (success_delta * 100).toFixed(1) : "N/A"} percentage points`}
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.32, delay: 0.10, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 0.32, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
         >
-          {formatHeroDelta(success_delta)}
-        </motion.span>
-        <span className="text-xs font-mono text-zinc-500">pp = percentage points</span>
+          <DeltaCountUp delta={success_delta} className={verdictTextClass(v)} />
+        </motion.div>
+        <span className="t-caption">pp = percentage points</span>
       </div>
 
       {/* Interpretation */}
-      <p className="text-sm text-zinc-600 leading-relaxed max-w-[62ch]">
+      <p className="t-body text-[var(--text-secondary)] max-w-[62ch]">
         {interpretationCopy(v, success_delta)}
       </p>
 
-      {/* Confidence ruler */}
+      {/* Confidence Ruler — the optical center */}
       {showRuler && (
-        <ConfidenceRuler
-          delta={success_delta!}
-          noiseThreshold={noiseThreshold}
-          verdict={v}
-        />
+        <ConfidenceRuler delta={success_delta!} noiseThresholdProp={nt} verdict={v} />
       )}
 
-      {/* Measurement confidence footer */}
-      <p className="text-[11px] font-mono text-zinc-500">
+      {/* Measurement footer */}
+      <p className="t-data text-[11px] text-[var(--text-tertiary)]">
         {verdict !== "refused"
-          ? `n=${n_tasks} tasks · ${runs_per_config} runs/config · σ=±${(success_stddev * 100).toFixed(3)} pp`
+          ? `n=${n_tasks} tasks · ${runs_per_config} runs/config · σ ±${(success_stddev * 100).toFixed(3)} pp`
           : `n=${n_tasks} tasks · ${runs_per_config} runs/config`}
       </p>
-    </motion.div>
+    </InstrumentCard>
   );
 }

@@ -21,7 +21,7 @@ def test_readme_exists():
 
 @pytest.mark.parametrize("forbidden", FORBIDDEN)
 def test_readme_does_not_contain_forbidden(forbidden):
-    content = README.read_text().lower()
+    content = README.read_text(encoding="utf-8").lower()
     assert forbidden.lower() not in content, (
         f"README.md must not contain {forbidden!r} — see positioning honesty rules."
     )

@@ -27,10 +27,27 @@ skills-audit.txt
 # AI workspace
 .agents/
 .claude/
+.vscode/
+.playwright-mcp/
 skills-lock.json
 
 # Research
 Research/
+
+# Internal working / session docs (not for public repo)
+PRIMER_FINAL_BUILD_SPECIFICATION.md
+PRIMER_UX_DISCOVERY_AUDIT.md
+STITCH_PROMPT.md
+
+# QA / audit / iteration screenshots (working session artifacts)
+audit-*.png
+critique-*.png
+qa-*.png
+v4-*.png
+v42-*.png
+v43-*.png
+v44-*.png
+v5-*.png
 
 # Local inspection artifacts
 committed-files.txt

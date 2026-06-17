@@ -33,9 +33,9 @@ export default async function Page({
   // Placeholder path generated when no repository data exists at build time.
   if (id === "0") {
     return (
-      <main className="max-w-5xl mx-auto px-6 py-10">
+      <div className="max-w-5xl mx-auto px-6 py-10">
         <EmptyState />
-      </main>
+      </div>
     );
   }
 
@@ -62,15 +62,15 @@ export default async function Page({
     }
 
     return (
-      <main className="max-w-5xl mx-auto px-6 py-10">
+      <div className="max-w-5xl mx-auto px-6 py-10">
         <EvaluationDetail data={data} prevId={prevId} />
-      </main>
+      </div>
     );
   } catch {
     return (
-      <main className="max-w-5xl mx-auto px-6 py-10">
+      <div className="max-w-5xl mx-auto px-6 py-10">
         <EmptyState />
-      </main>
+      </div>
     );
   }
 }

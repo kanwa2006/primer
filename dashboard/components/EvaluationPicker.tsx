@@ -1,7 +1,12 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { formatDate, shortenCommit, verdictColor, verdictWord, verdictIcon } from "@/lib/format";
+import { formatDate, shortenCommit } from "@/lib/format";
+import { VERDICT_WORD, VERDICT_GLYPH } from "@/lib/verdict";
+import { VerdictBadge } from "@/components/VerdictBadge";
+import {
+  Select, SelectContent, SelectItem, SelectLabel, SelectTrigger, SelectValue, SelectGroup, SelectSeparator,
+} from "@/components/ui/select";
 import type { EvaluationSummary } from "@/lib/types";
 
 interface Props {
@@ -25,9 +30,9 @@ export function EvaluationPicker({ evaluations, a, b }: Props) {
 
   if (evaluations.length === 0) {
     return (
-      <div className="text-zinc-500 text-xs font-mono py-4">
+      <div className="text-[var(--text-tertiary)] text-xs font-mono py-4">
         No evaluations available. Run{" "}
-        <code className="font-mono bg-zinc-100 px-1.5 py-0.5 rounded text-zinc-700">
+        <code className="font-mono bg-[var(--surface-raised)] px-1.5 py-0.5 rounded text-[var(--text-secondary)]">
           primer eval .
         </code>{" "}
         and export data first.
@@ -40,10 +45,10 @@ export function EvaluationPicker({ evaluations, a, b }: Props) {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="text-zinc-500 text-xs font-mono uppercase tracking-widest">
-        Select evaluations to compare
-      </div>
-      <div className="grid grid-cols-2 gap-6">
+      <p className="text-[var(--text-tertiary)] text-xs font-mono">
+        Select two evaluations to compare. PRIMER refuses cross-model comparisons.
+      </p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         <PickerSelect
           label="Baseline A"
           evaluations={evaluations}
@@ -59,11 +64,9 @@ export function EvaluationPicker({ evaluations, a, b }: Props) {
           onChange={(v) => handleChange("b", v)}
         />
       </div>
-      {(a !== null || b !== null) && (
-        <p className="text-xs font-mono text-zinc-500">
-          {a === null || b === null
-            ? "Select both evaluations to view the comparison."
-            : null}
+      {(a !== null || b !== null) && (a === null || b === null) && (
+        <p className="text-xs font-mono text-[var(--text-tertiary)]">
+          Select both evaluations to view the comparison.
         </p>
       )}
     </div>
@@ -83,48 +86,53 @@ function PickerSelect({
   incompatibleWith: EvaluationSummary | null;
   onChange: (v: string) => void;
 }) {
-  const selectId = label.toLowerCase().replace(/\s+/g, "-");
   const isIncompatible = (ev: EvaluationSummary) =>
     incompatibleWith != null &&
     ev.id !== incompatibleWith.id &&
     (ev.provider !== incompatibleWith.provider || ev.model !== incompatibleWith.model);
+
   const anyDisabled = evaluations.some(isIncompatible);
+  const selectedEval = value !== null ? evaluations.find((e) => e.id === value) : null;
+
   return (
     <div className="flex flex-col gap-2">
-      <label htmlFor={selectId} className="text-xs font-mono text-zinc-500 uppercase tracking-widest">
+      <label className="text-[10px] font-mono text-[var(--text-tertiary)] uppercase tracking-widest">
         {label}
       </label>
-      <select
-        id={selectId}
-        className="border border-zinc-200 rounded px-3 py-2 text-xs font-mono text-zinc-700 bg-white focus:outline-none focus:ring-2 focus:ring-zinc-300 cursor-pointer"
-        value={value ?? ""}
-        onChange={(e) => onChange(e.target.value)}
+      <Select
+        value={value !== null ? String(value) : ""}
+        onValueChange={onChange}
       >
-        <option value="">— pick evaluation —</option>
-        {evaluations.map((ev) => {
-          const disabled = isIncompatible(ev);
-          return (
-            <option key={ev.id} value={ev.id} disabled={disabled}>
-              #{ev.id} · {shortenCommit(ev.repo_commit)} ·{" "}
-              {formatDate(ev.created_at)} · {verdictIcon(ev.verdict)} {verdictWord(ev.verdict)}
-              {disabled ? " — not comparable (different provider/model)" : ""}
-            </option>
-          );
-        })}
-      </select>
+        <SelectTrigger>
+          <SelectValue placeholder="— pick evaluation —" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectGroup>
+            <SelectLabel>Evaluations</SelectLabel>
+            {evaluations.map((ev) => {
+              const disabled = isIncompatible(ev);
+              return (
+                <SelectItem
+                  key={ev.id}
+                  value={String(ev.id)}
+                  disabled={disabled}
+                >
+                  #{ev.id} · {shortenCommit(ev.repo_commit)} · {formatDate(ev.created_at)} · {VERDICT_GLYPH[ev.verdict]} {VERDICT_WORD[ev.verdict]}
+                  {disabled ? " (incompatible)" : ""}
+                </SelectItem>
+              );
+            })}
+          </SelectGroup>
+        </SelectContent>
+      </Select>
+
       {anyDisabled && (
-        <p className="text-[11px] font-mono text-zinc-500 leading-relaxed">
-          Disabled evaluations use a different provider or model than the other selection.
-          PRIMER refuses cross-model comparisons, so they cannot be compared here.
+        <p className="text-[11px] font-mono text-[var(--text-tertiary)] leading-relaxed">
+          Greyed evaluations use a different provider or model — PRIMER refuses cross-model comparisons.
         </p>
       )}
-      {value !== null && (
-        <span className={`text-xs font-mono ${verdictColor(evaluations.find((e) => e.id === value)?.verdict ?? "within-noise")}`}>
-          {(() => {
-            const ev = evaluations.find((e) => e.id === value);
-            return ev ? `${verdictIcon(ev.verdict)} ${verdictWord(ev.verdict)}` : "";
-          })()}
-        </span>
+      {selectedEval && (
+        <VerdictBadge verdict={selectedEval.verdict} size="sm" />
       )}
     </div>
   );

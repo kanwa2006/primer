@@ -19,8 +19,8 @@ export default async function Home() {
   }
 
   return (
-    <main className="max-w-5xl mx-auto px-6 py-10">
+    <div className="max-w-5xl mx-auto px-6 py-10">
       {data ? <RepositoryOverview data={data} /> : <EmptyState />}
-    </main>
+    </div>
   );
 }

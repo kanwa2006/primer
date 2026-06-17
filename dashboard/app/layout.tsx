@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { ThemeProvider } from "@/components/ThemeProvider";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
+import { AuroraBg } from "@/components/AuroraBg";
+import { CursorCompanion } from "@/components/CursorCompanion";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -16,15 +19,27 @@ const geistMono = Geist_Mono({
   display: "swap",
 });
 
+const _desc =
+  "PRIMER answers one question with evidence: does this repo's CLAUDE.md make a coding agent measurably better, worse, or neither?";
+const _ogImg = `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/og-image.png`;
+
 export const metadata: Metadata = {
-  title: "PRIMER — context-file measurement",
-  description:
-    "PRIMER measures whether this repo's AI-agent context file improves coding-agent success, under controlled conditions.",
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"
+  ),
+  title: "PRIMER — CLAUDE.md measurement",
+  description: _desc,
   openGraph: {
     title: "PRIMER",
-    description:
-      "PRIMER measures whether this repo's AI-agent context file improves coding-agent success, under controlled conditions.",
+    description: _desc,
     type: "website",
+    images: [_ogImg],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "PRIMER",
+    description: _desc,
+    images: [_ogImg],
   },
 };
 
@@ -40,15 +55,29 @@ export default function RootLayout({
       suppressHydrationWarning
       style={{ viewTransitionName: "root" } as React.CSSProperties}
     >
-      <body className="bg-white text-zinc-900 font-sans antialiased">
-        <SiteHeader />
-        <div className="border-b border-zinc-200 bg-zinc-50">
-          <p className="max-w-5xl mx-auto px-6 py-2 text-xs text-zinc-500 leading-relaxed">
-            {"PRIMER measures whether this repo's AI-agent context file improves coding-agent success, under controlled conditions."}
-          </p>
-        </div>
-        {children}
-        <SiteFooter />
+      <body className="bg-[var(--surface-base)] text-[var(--text-primary)] font-sans antialiased min-h-screen">
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem
+          disableTransitionOnChange={false}
+        >
+          <AuroraBg />
+          <CursorCompanion />
+          <div className="relative z-10">
+            <a
+              href="#main-content"
+              className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:px-4 focus:py-2 focus:rounded-md focus:bg-[var(--surface-raised)] focus:text-[var(--text-primary)] focus:border focus:border-[var(--accent-signal)] focus:shadow-card focus:outline-none text-sm font-medium"
+            >
+              Skip to main content
+            </a>
+            <SiteHeader />
+            <main id="main-content" className="min-h-[calc(100vh-3.5rem)]">
+              {children}
+            </main>
+            <SiteFooter />
+          </div>
+        </ThemeProvider>
       </body>
     </html>
   );

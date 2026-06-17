@@ -2,41 +2,295 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ─── Graphite Instrument Design System — §14 ───────────────────────────────
+   Dual-mode. Toggled by next-themes (class strategy on <html>).
+   Default: dark (Graphite). Light available via .light class.
+   ──────────────────────────────────────────────────────────────────────────── */
+
 :root {
-  color-scheme: light;
+  /* Dark (default) surface stack */
+  --surface-base:     #0E0F11;
+  --surface-elevated: #16171A;
+  --surface-raised:   #1D1F23;
+
+  /* Dark borders */
+  --border-hairline: rgba(255,255,255,.07);
+  --border-strong:   rgba(255,255,255,.13);
+
+  /* Dark text */
+  --text-primary:   #ECEDEE;
+  --text-secondary: #9BA1A6;
+  --text-tertiary:  #868D94; /* WCAG AA (≥4.5:1 on all dark surfaces incl. raised) */
+
+  /* Accent — one per screen (focus ring, active nav, ruler dot) */
+  --accent-signal: #7DD3FC;
+  --accent-glow:   rgba(125,211,252,.22);
+
+  /* Machined depth — edge-light (top inner highlight) + cursor glow tint */
+  --edge-light:        rgba(255,255,255,.05);
+  --edge-light-strong: rgba(255,255,255,.09);
+  --surface-glow:      rgba(125,211,252,.08);
+  --shadow-ring:       rgba(255,255,255,.025); /* micro-contrast hairline ring */
+
+  /* Confidence Ruler — instrument tokens (theme-tuned, NOT opacity-on-tertiary) */
+  --ruler-tick:        rgba(255,255,255,.16);
+  --ruler-tick-major:  rgba(255,255,255,.46);
+  --ruler-recess:      inset 0 1px 3px rgba(0,0,0,.5), inset 0 0 0 1px rgba(255,255,255,.015);
+
+  /* Aurora atmosphere — graphite-cool, tied to accent + verdict hues */
+  --aurora-1: rgba(125,211,252,.10);  /* signal blue   */
+  --aurora-2: rgba(52,211,153,.07);   /* positive emerald */
+  --aurora-3: rgba(96,125,180,.09);   /* steel */
+
+  /* Verdict palette — dark mode */
+  --verdict-positive-bg:     rgba(52,211,153,.12);
+  --verdict-positive-fg:     #34d399;
+  --verdict-positive-border: rgba(52,211,153,.30);
+  --verdict-negative-bg:     rgba(248,113,113,.12);
+  --verdict-negative-fg:     #f87171;
+  --verdict-negative-border: rgba(248,113,113,.30);
+  --verdict-noise-fg:        #94a3b8;
+  --verdict-noise-border:    rgba(148,163,184,.30);
+  --verdict-refused-fg:      #a1a1aa;
+  --verdict-refused-border:  rgba(161,161,170,.30);
+
+  /* Warning amber */
+  --warning-fg:   #fbbf24;
+  --warning-bg:   rgba(251,191,36,.10);
+  --warning-border: rgba(251,191,36,.25);
+
+  /* Motion easing */
+  --ease-out:        cubic-bezier(.23,1,.32,1);
+  --ease-instrument: cubic-bezier(.32,.72,0,1);
+}
+
+/* Light mode overrides */
+.light {
+  --surface-base:     #F4F5F6;
+  --surface-elevated: #FFFFFF;
+  --surface-raised:   #ECEEF0;
+
+  --border-hairline: #E3E5E8;
+  --border-strong:   #D2D6DA;
+
+  --text-primary:   #16181B;
+  --text-secondary: #515860;
+  --text-tertiary:  #646B72; /* WCAG AA (≥4.5:1 on all light surfaces incl. raised) */
+
+  --accent-signal: #0EA5E9;
+  --accent-glow:   rgba(14,165,233,.18);
+
+  --edge-light:        rgba(255,255,255,.85);
+  --edge-light-strong: rgba(255,255,255,1);
+  --surface-glow:      rgba(14,165,233,.13);
+  --shadow-ring:       rgba(22,24,27,.05); /* crisp dark hairline ring on paper */
+
+  /* Ruler — light is designed, not ported: dark engraving + soft recess */
+  --ruler-tick:        rgba(22,24,27,.22);
+  --ruler-tick-major:  rgba(22,24,27,.52);
+  --ruler-recess:      inset 0 1px 2px rgba(22,24,27,.14), inset 0 0 0 1px rgba(22,24,27,.04);
+
+  /* Aurora — cooler in light so it never reads as a green smudge on paper */
+  --aurora-1: rgba(14,165,233,.09);
+  --aurora-2: rgba(56,120,150,.05);
+  --aurora-3: rgba(96,125,180,.07);
+
+  --verdict-positive-bg:     rgba(5,150,105,.08);
+  --verdict-positive-fg:     #059669;
+  --verdict-positive-border: rgba(5,150,105,.25);
+  --verdict-negative-bg:     rgba(220,38,38,.08);
+  --verdict-negative-fg:     #dc2626;
+  --verdict-negative-border: rgba(220,38,38,.25);
+  --verdict-noise-fg:        #475569;
+  --verdict-noise-border:    rgba(71,85,105,.25);
+  --verdict-refused-fg:      #71717a;
+  --verdict-refused-border:  rgba(113,113,122,.25);
+
+  --warning-fg:     #b45309;
+  --warning-bg:     rgba(180,83,9,.08);
+  --warning-border: rgba(180,83,9,.20);
 }
 
 html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: var(--surface-base);
+  color: var(--text-primary);
 }
 
 body {
-  background-color: #fafafa; /* zinc-50 */
-  color: #18181b;             /* zinc-900 */
+  background-color: var(--surface-base);
+  color: var(--text-primary);
 }
 
-/* Ensure monospace numbers are tabular */
+/* Monospace numbers are tabular */
 .font-mono {
   font-variant-numeric: tabular-nums;
 }
 
-/* Focus ring */
+/* ─── Typography architecture — §V4 ──────────────────────────────────────────
+   Geist Sans is the product voice. Geist Mono is the instrument readout — it
+   appears ONLY on .t-data (deltas, hashes, model ids, telemetry). A real
+   modular scale (~1.25) fills the mid-register the old type lacked.
+   ──────────────────────────────────────────────────────────────────────────── */
+
+.t-display {
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  font-size: clamp(2.7rem, 1.4rem + 4.6vw, 4.5rem);
+  line-height: 1.0;
+  letter-spacing: -0.038em;
+  font-weight: 640;
+  text-wrap: balance;
+}
+/* Route headings — product-grade presence, not HTML content */
+.t-h1 {
+  font-size: clamp(2.1rem, 1.4rem + 2.9vw, 3.15rem);
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  font-weight: 640;
+  text-wrap: balance;
+}
+.t-h2 {
+  font-size: clamp(1.5rem, 1.1rem + 1.2vw, 1.9rem);
+  line-height: 1.13;
+  letter-spacing: -0.024em;
+  font-weight: 640;
+  text-wrap: balance;
+}
+.t-h3 {
+  font-size: 1.1875rem;
+  line-height: 1.28;
+  letter-spacing: -0.016em;
+  font-weight: 620;
+}
+.t-lead {
+  font-size: clamp(1rem, 0.95rem + 0.4vw, 1.1875rem);
+  line-height: 1.55;
+  letter-spacing: -0.006em;
+  color: var(--text-secondary);
+  text-wrap: pretty;
+}
+.t-body {
+  font-size: 0.9375rem; /* 15px */
+  line-height: 1.6;
+  text-wrap: pretty;
+}
+.t-caption {
+  font-size: 0.8125rem; /* 13px */
+  line-height: 1.5;
+  color: var(--text-tertiary);
+  text-wrap: pretty;
+}
+/* Section eyebrow — sans, not mono. Tracked + tertiary. Deliberate label. */
+.t-eyebrow {
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.6875rem; /* 11px */
+  line-height: 1;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--text-tertiary);
+}
+/* The instrument readout — the ONLY place mono lives by design. */
+.t-data {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+/* Global readability defaults */
+h1, h2, h3 { text-wrap: balance; }
+p { text-wrap: pretty; }
+
+/* ─── Aurora atmosphere — §V4 ────────────────────────────────────────────────
+   Fixed, GPU-composited radial mesh tied to the semantic palette. ~0.5KB.
+   Drifts on a 32s cycle; pauses on hidden tab + reduced motion.
+   ──────────────────────────────────────────────────────────────────────────── */
+@property --aurora-shift { syntax: "<percentage>"; inherits: false; initial-value: 0%; }
+
+.aurora-field {
+  position: fixed;
+  inset: -20vmax;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(38vmax 30vmax at calc(22% + var(--aurora-shift)) 8%,  var(--aurora-1), transparent 60%),
+    radial-gradient(34vmax 28vmax at calc(82% - var(--aurora-shift)) 14%, var(--aurora-3), transparent 62%),
+    radial-gradient(46vmax 34vmax at 50% calc(108% - var(--aurora-shift)), var(--aurora-2), transparent 60%);
+  filter: blur(8px) saturate(112%);
+  will-change: transform;
+  animation: aurora-drift 32s var(--ease-out, ease) infinite alternate;
+}
+@keyframes aurora-drift {
+  0%   { --aurora-shift: 0%;  transform: translate3d(0,0,0)        scale(1);    }
+  50%  { --aurora-shift: 6%;  transform: translate3d(-1.5%,1%,0)   scale(1.06); }
+  100% { --aurora-shift: 12%; transform: translate3d(1.5%,-1%,0)   scale(1.02); }
+}
+
+/* ─── Instrument surface — machined depth + cursor "mole-under-sand" glow ─────
+   Local radial highlight tracks the pointer (--gx/--gy set in JS via rAF).
+   The surface never warps; only the local lighting responds. Pointer-only.
+   ──────────────────────────────────────────────────────────────────────────── */
+.instrument-surface {
+  position: relative;
+  isolation: isolate;
+}
+.instrument-surface::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  z-index: 0;
+  opacity: 0;
+  transition: opacity 0.55s var(--ease-out);
+  /* Softer falloff = the surface 'breathes' rather than spotlights. */
+  background: radial-gradient(
+    18rem 18rem at var(--gx, 50%) var(--gy, 0%),
+    var(--surface-glow) 0%,
+    transparent 72%
+  );
+}
+@media (hover: hover) and (pointer: fine) {
+  .instrument-surface:hover::before { opacity: 1; }
+}
+.instrument-surface > * { position: relative; z-index: 1; }
+
+/* Scroll-reveal — reveal once, never replay (native, lightest path). */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .reveal-on-scroll {
+      animation: primer-reveal linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 26%;
+    }
+  }
+}
+@keyframes primer-reveal {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Focus ring — accent signal only */
 *:focus-visible {
-  outline: 2px solid #71717a; /* zinc-500 */
+  outline: 2px solid var(--accent-signal);
   outline-offset: 2px;
   border-radius: 4px;
 }
 
-/* ─── Premium motion layer (§7) ─────────────────────────────────────────────
-   Compositor-only (opacity/transform). Valence-neutral: every verdict class
-   receives the same animation parameters. Progressive: @supports guard so
-   browsers without animation-timeline get the static P5 experience.
-   Reduced-motion: the @media guard below collapses all durations to 0.01ms.
+/* ─── Graticule texture — inline SVG tick pattern ────────────────────────────
+   shape-rendering:crispEdges, low-contrast. Used as hero backdrop / dividers. */
+.graticule-bg {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Cpath d='M0 20h4M36 20h4M20 0v4M20 36v4' stroke='rgba(255,255,255,0.055)' stroke-width='1' shape-rendering='crispEdges'/%3E%3C/svg%3E");
+}
+.light .graticule-bg {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Cpath d='M0 20h4M36 20h4M20 0v4M20 36v4' stroke='rgba(0,0,0,0.045)' stroke-width='1' shape-rendering='crispEdges'/%3E%3C/svg%3E");
+}
+
+/* ─── Premium motion layer — §15 ─────────────────────────────────────────────
+   Compositor-only (opacity/transform). Reduced-motion collapses all to 0.01ms.
    ──────────────────────────────────────────────────────────────────────────── */
 
-/* Scroll-driven per-task stagger — ~40ms per row, progressive enhancement.
-   Rows are already visible on entry; this adds a reveal-on-scroll refinement. */
+/* Scroll-driven per-task stagger — progressive enhancement */
 @supports (animation-timeline: scroll()) {
   @media (prefers-reduced-motion: no-preference) {
     table tbody tr {
@@ -52,8 +306,7 @@ body {
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* Cross-document view transitions — progressive: only if supported.
-   Transition is opacity/transform only (compositor). */
+/* Cross-document view transitions — progressive */
 @supports (view-transition-name: none) {
   @media (prefers-reduced-motion: no-preference) {
     ::view-transition-old(root),
@@ -61,12 +314,8 @@ body {
       animation-duration: 0.22s;
       animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
     }
-    ::view-transition-old(root) {
-      animation-name: primer-vt-out;
-    }
-    ::view-transition-new(root) {
-      animation-name: primer-vt-in;
-    }
+    ::view-transition-old(root) { animation-name: primer-vt-out; }
+    ::view-transition-new(root) { animation-name: primer-vt-in; }
   }
 }
 
@@ -74,17 +323,33 @@ body {
   from { opacity: 1; transform: translateY(0); }
   to   { opacity: 0; transform: translateY(-6px); }
 }
-
 @keyframes primer-vt-in {
   from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ─── Reduced motion (must come after premium rules so it wins) ───────────── */
+/* Theme toggle mask */
+@keyframes primer-theme-blur {
+  0%   { filter: blur(0px); }
+  50%  { filter: blur(2px); }
+  100% { filter: blur(0px); }
+}
+.theme-transitioning * {
+  animation: primer-theme-blur 0.22s ease forwards !important;
+}
+
+/* ─── Reduced motion (must come last) ────────────────────────────────────────*/
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+  /* Ambient + cursor systems are fully disabled, not just slowed. */
+  .aurora-field { animation: none !important; }
+  .instrument-surface::before { display: none !important; }
+  .cursor-companion { display: none !important; }
 }
+
+/* Pause ambient drift when the tab is hidden (perf + battery). */
+:root:has(body[data-tab-hidden="true"]) .aurora-field { animation-play-state: paused; }

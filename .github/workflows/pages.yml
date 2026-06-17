@@ -37,6 +37,7 @@ jobs:
         working-directory: dashboard
         env:
           NEXT_PUBLIC_BASE_PATH: /primer
+          NEXT_PUBLIC_SITE_URL: https://kanwa2006.github.io
 
       - name: Add .nojekyll (required for _next/ assets)
         run: touch dashboard/out/.nojekyll

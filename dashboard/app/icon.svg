@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <!-- Graphite background -->
+  <rect width="32" height="32" rx="6" fill="#0E0F11"/>
+  <!-- Graticule tick marks -->
+  <line x1="8"  y1="6"  x2="8"  y2="9"  stroke="#ECEDEE" stroke-width="1" opacity="0.3"/>
+  <line x1="16" y1="6"  x2="16" y2="9"  stroke="#ECEDEE" stroke-width="1" opacity="0.3"/>
+  <line x1="24" y1="6"  x2="24" y2="9"  stroke="#ECEDEE" stroke-width="1" opacity="0.3"/>
+  <line x1="6"  y1="8"  x2="9"  y2="8"  stroke="#ECEDEE" stroke-width="1" opacity="0.3"/>
+  <line x1="6"  y1="16" x2="9"  y2="16" stroke="#ECEDEE" stroke-width="1" opacity="0.3"/>
+  <line x1="6"  y1="24" x2="9"  y2="24" stroke="#ECEDEE" stroke-width="1" opacity="0.3"/>
+  <!-- P letterform -->
+  <text x="7" y="24" font-family="ui-monospace,monospace" font-size="18" font-weight="600" fill="#ECEDEE" letter-spacing="-1">P</text>
+  <!-- Accent signal dot -->
+  <circle cx="25" cy="22" r="2.5" fill="#7DD3FC"/>
+</svg>

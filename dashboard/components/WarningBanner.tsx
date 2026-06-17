@@ -1,6 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "motion/react";
+import { TriangleAlert } from "lucide-react";
 
 interface WarningBannerProps {
   providerMismatch: string | null;
@@ -8,27 +9,30 @@ interface WarningBannerProps {
   flakyTask: string | null;
 }
 
-function SingleWarning({ message }: { message: string }) {
+interface WarningEntry {
+  key: string;
+  label: string;
+  message: string;
+}
+
+function SingleWarning({ label, message }: { label: string; message: string }) {
   return (
-    <div className="flex items-start gap-3 px-4 py-3 rounded border border-amber-500/20 bg-amber-500/5">
-      <svg
-        width="16"
-        height="16"
-        viewBox="0 0 16 16"
-        fill="none"
-        aria-hidden="true"
-        className="text-amber-600 mt-0.5 shrink-0"
-      >
-        <path
-          d="M8 2L14.5 13H1.5L8 2Z"
-          stroke="currentColor"
-          strokeWidth="1.2"
-          strokeLinejoin="round"
-        />
-        <line x1="8" y1="7" x2="8" y2="10" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-        <circle cx="8" cy="11.5" r="0.6" fill="currentColor" />
-      </svg>
-      <p className="text-amber-700 text-xs leading-relaxed font-mono">{message}</p>
+    <div
+      role="alert"
+      className="flex items-start gap-2.5 px-4 py-3 rounded-md border border-[var(--warning-border)] bg-[var(--warning-bg)]"
+    >
+      <TriangleAlert
+        size={14}
+        strokeWidth={1.5}
+        className="text-[var(--warning-fg)] mt-0.5 shrink-0"
+        aria-hidden
+      />
+      <div>
+        <p className="text-[10px] font-mono uppercase tracking-widest text-[var(--warning-fg)] font-semibold mb-0.5">
+          {label}
+        </p>
+        <p className="text-[var(--warning-fg)] text-xs leading-relaxed font-mono">{message}</p>
+      </div>
     </div>
   );
 }
@@ -38,25 +42,27 @@ export function WarningBanner({
   isolationMismatch,
   flakyTask,
 }: WarningBannerProps) {
-  const warnings = [providerMismatch, isolationMismatch, flakyTask].filter(Boolean) as string[];
+  const warnings: WarningEntry[] = [
+    { key: "provider",  label: "Provider mismatch",    message: providerMismatch  ?? "" },
+    { key: "isolation", label: "Isolation mismatch",   message: isolationMismatch ?? "" },
+    { key: "flaky",     label: "Flaky tasks detected", message: flakyTask         ?? "" },
+  ].filter((w) => w.message !== "");
+
+  if (warnings.length === 0) return null;
 
   return (
-    <AnimatePresence>
-      {warnings.length > 0 && (
-        <motion.div
-          className="flex flex-col gap-2"
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -8 }}
-          transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-          role="alert"
-          aria-live="polite"
-        >
-          {warnings.map((w, i) => (
-            <SingleWarning key={i} message={w} />
-          ))}
-        </motion.div>
-      )}
+    <AnimatePresence initial>
+      <motion.div
+        className="flex flex-col gap-2"
+        initial={{ opacity: 0, y: -8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+        aria-live="polite"
+      >
+        {warnings.map((w) => (
+          <SingleWarning key={w.key} label={w.label} message={w.message} />
+        ))}
+      </motion.div>
     </AnimatePresence>
   );
 }

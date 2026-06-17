@@ -301,8 +301,7 @@ primer/
 │   └── lib/              # format.ts, verdict.ts, computeComparison.ts
 ├── tests/                # 20 test files, 554 tests
 ├── docs/
-│   ├── assets/           # Screenshots for README and documentation
-│   └── v3/               # Product specification and architecture documents
+│   └── assets/           # Screenshots for README and documentation
 ├── docker/               # Eval container Dockerfile + egress proxy
 ├── .github/
 │   ├── workflows/pages.yml        # CI/CD — builds and deploys dashboard

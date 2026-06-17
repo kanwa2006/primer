@@ -1,5 +1,12 @@
 # DESIGN.md — PRIMER
 
+> **WARNING — DESIGN SPECIFICATION, NOT REAL DATA.**
+> All sample datasets, numeric deltas, confidence intervals, repository names (`acme-payments`), task names, verdict labels (`IMPROVED / NEUTRAL / HARMFUL`), and evaluation results in this document are **hypothetical design examples only**. They are not real evaluation results produced by PRIMER.
+>
+> The real PRIMER verdict taxonomy is: **Helped ▲ / Hurt ▼ / No measurable effect ≈ / Not comparable ⊘**. The real uncertainty model is a noise envelope (`max(1/n_tasks, success_stddev)`), not a 95% confidence interval. Real results live in `dashboard/public/`.
+
+---
+
 > Single source of truth for PRIMER's product design. This file is fed **blind and independently** into AI design tools (Claude Design, Google Stitch) to generate multiple competing high-fidelity concepts. It is self-contained: every token, number, and copy string needed to build a premium concept lives here. **It contains no code and no implementation plans — design specification only.**
 
 ---

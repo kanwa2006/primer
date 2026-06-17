@@ -56,7 +56,12 @@ ledger.diff
 staged.txt
 taged.txt
 
-# AI execution docs
+# AI execution docs and session artifacts
 docs/PRIMER_V2_IMPLEMENTATION_PROMPTS.md
-docs/v3/PRIMER_V3_EXECUTION_MASTERPLAN.md
+docs/v3/
+docs/authority/
+docs/screenshot-plan.md
+docs/PRIMER_V2_ARCHITECTURE_IMPLEMENTATION_SPEC.md
+PRIMER_V3_FINAL_ACCEPTANCE_AUDIT.md
+RELEASE_READY.md
 

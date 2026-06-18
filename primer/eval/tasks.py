@@ -1,4 +1,4 @@
-"""Task derivation — Spec C (no LLM, deterministic).
+"""Task derivation — deterministic, no LLM calls.
 
 derive_tasks() produces a list of Tasks with deterministic failing start states.
 Priority order:
@@ -46,7 +46,7 @@ def derive_tasks(
 ) -> list[Task]:
     """Derive up to *n* deterministic, test-backed tasks from the repo.
 
-    Spec C contract:
+    Contract:
     - Every emitted Task fails verify_cmd at start state.
     - A correct change makes verify_cmd pass.
     - verify_cmd is the repo's own test runner; exit code is the sole verdict.

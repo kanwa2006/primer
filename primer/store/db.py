@@ -1,8 +1,8 @@
-"""SQLite persistence -- the ONLY module in PRIMER that imports sqlite3.
+"""SQLite persistence — the ONLY module in PRIMER that imports sqlite3.
 
 Boundary invariant: only primer/store/ imports sqlite3.
 raw_output/logs are always redacted (log_safe()) before any write.
-base_image stores the resolved sha256 digest (M5).
+base_image stores the resolved sha256 digest.
 """
 from __future__ import annotations
 
@@ -26,7 +26,7 @@ _SCHEMA_SQL = Path(__file__).parent / "schema.sql"
 def init_db(config: "Settings") -> sqlite3.Connection:
     """Open (or create) the database, apply schema and migrations, return connection.
 
-    Phase 6: calls apply_migrations() after schema.sql to handle version upgrades.
+    Calls apply_migrations() after schema.sql to handle version upgrades.
     Raises store.migrations.SchemaTooNewError if the db was written by a newer PRIMER.
     """
     from primer.store.migrations import apply_migrations
@@ -280,7 +280,7 @@ def _row_to_score_report(conn: sqlite3.Connection, row: sqlite3.Row) -> "ScoreRe
         pr_w = sum(r["passed"] for r in without) / len(without) if without else 0.0
         pr_t = sum(r["passed"] for r in with_) / len(with_) if with_ else 0.0
         flaky_any = any(r["flaky"] for r in task_runs)
-        # M7: if the report recorded a provider_mismatch_warning, delta was
+        # If the report recorded a provider_mismatch_warning, delta was
         # refused at aggregation time and must remain None on reconstruction.
         task_delta = (
             None if row["provider_mismatch_warning"] is not None

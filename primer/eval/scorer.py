@@ -1,17 +1,17 @@
-"""Scorer — aggregation, variance, and refuse-on-mismatch (AD-5, M3).
+"""Scorer — aggregation, variance, and refuse-on-mismatch.
 
-score() runs all tasks × {without, with} × runs_per_config SEQUENTIALLY (Q1).
+score() runs all tasks × {without, with} × runs_per_config SEQUENTIALLY.
 For each run, context_content is threaded to run_task, which writes (WITH) or
 omits (WITHOUT) the context file directly in the cloned work_dir. The source
-repository is NEVER mutated (BLK-5).
+repository is NEVER mutated.
 
 Honesty rules:
-  - success_delta = None on provider/model mismatch (Q9d, AD-5)
+  - success_delta = None on provider/model mismatch
   - isolation_mismatch_warning when network_mode/egress_enforced/base_image not uniform
   - "egress-restricted" claim only if ALL runs have egress_enforced=True
   - cost_confidence = worst-of constituent runs
   - primer_overhead_usd carried separately, NEVER summed into cost_with/without (two-stream rule)
-  - variance (stddev/min/max) always reported, never collapsed (M3)
+  - variance (stddev/min/max) always reported, never collapsed
 """
 from __future__ import annotations
 
@@ -93,16 +93,15 @@ def score(
                     context_content=context_content,
                 )
 
-                # BLK-2: abort if the WITH arm did not acknowledge the context file
-                # (M4 harness-validity gate). False = marker absent = harness broken.
+                # Harness validity gate: abort if the WITH arm did not acknowledge
+                # the context file (fingerprint gate). False = marker absent = harness broken.
                 # None = adapter does not participate; never an abort condition.
                 if with_ctx and run_result.harness_fingerprint_valid is False:
                     raise HarnessValidityError(
                         f"WITH arm of task {task.id!r} (run {run_idx + 1}/{runs_per_config}) "
                         f"did not acknowledge the context file — harness integrity failure. "
                         f"No delta will be reported. "
-                        f"Verify the fingerprint instruction text "
-                        f"(see 16_BLK2_SPECIFICATION.md §4)."
+                        f"Verify the fingerprint instruction text in the adapter."
                     )
 
                 # Fill in provider/model provenance (PRIMER brain, not agent)

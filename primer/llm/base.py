@@ -1,8 +1,6 @@
 """LLM provider ABC and shared data models.
 
-This is the ONLY module in PRIMER where vendor SDK imports are permitted
-(security rule 2 from Session 1 / Session 2 §2).
-
+This is the ONLY module in PRIMER where vendor SDK imports are permitted.
 log_safe() MUST be used before any log write that touches LLM output or keys.
 """
 from __future__ import annotations
@@ -25,8 +23,8 @@ _REDACT_PATTERNS = [
 class TokenUsage:
     """Token accounting for one LLM call.
 
-    Two cache fields are included per Session 1 §1.5 / C8 (caching is dormant in MVP
-    because AGENTS.md/CLAUDE.md is below the 1,024-token Sonnet caching minimum).
+    Two cache fields are included for completeness; the generated file is typically
+    below the minimum token threshold for prompt caching.
     cost_usd is NEVER rendered without consulting cost_confidence.
     """
     input_tokens: int

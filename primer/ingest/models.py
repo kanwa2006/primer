@@ -1,7 +1,7 @@
-"""Data models for the ingest package (Phase 1, AD-1: no LLM).
+"""Data models for the ingest package.
 
 All fields reflect heuristic analysis only. Unknown fields are None/empty,
-never fabricated. No conventions/gotchas — those are generator output (AD-1).
+never fabricated. No conventions/gotchas — those are generator output.
 """
 from __future__ import annotations
 
@@ -45,12 +45,12 @@ class CommandSet:
 
 @dataclass
 class RepoProfile:
-    """Structural profile of a repository, built from heuristics only (AD-1).
+    """Structural profile of a repository, built from heuristics only.
 
     Notes:
     - repo_commit is the HEAD SHA at time of analysis (reproducibility anchor).
     - All unknown/undetectable fields are None or empty list — never fabricated.
-    - No conventions/gotchas fields: those are produced by generate/ (AD-1).
+    - No conventions/gotchas fields: those are produced by generate/.
     """
     repo_commit: str
     languages: list[LanguageStat] = field(default_factory=list)

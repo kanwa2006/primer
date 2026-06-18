@@ -1,7 +1,7 @@
-"""PRIMER CLI -- composition root (Phase 4 + Phase 6 + Phase 7A).
+"""PRIMER CLI — composition root.
 
 Commands: init, eval, report, history, compare, export.
-This is the ONLY orchestrator -- no other module imports cli.py.
+This is the ONLY orchestrator — no other module imports cli.py.
 
 Security invariant: no API key value ever appears in logs/output.
 Two-stream rule: PRIMER overhead (generation) is always separate from eval cost.

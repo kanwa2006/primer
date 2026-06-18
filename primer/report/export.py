@@ -1,15 +1,15 @@
-"""Phase 7A/7B: scores.json badge export and full dashboard data export.
+"""Scores.json badge export and full dashboard data export.
 
-Phase 7A (Q5):
+scores.json:
   CI writes scores.json to gh-pages; README uses a shields.io endpoint badge.
   Schema: {schemaVersion, label, message, color}
     - green  if success_delta > 0
     - yellow if success_delta == 0 or within noise (None/refused also yellow)
     - red    if success_delta < 0
 
-Phase 7B:
-  Full dashboard data export (data.json) for the Next.js scorecard.
-  Schema: all ScoreReport fields + M3 verdict label + per-task flip states.
+Dashboard export:
+  Full dashboard data export for the Next.js scorecard.
+  Schema: all ScoreReport fields + verdict label + per-task flip states.
 
 Module DAG boundary: report/ does no aggregation; all numbers come from ScoreReport.
 No imports of sqlite3 or docker (store/ and eval/ boundaries).
@@ -105,7 +105,7 @@ def write_scores_json(report: "ScoreReport", output_path: Path) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# Phase 7B — full dashboard data export
+# Dashboard data export
 # ---------------------------------------------------------------------------
 
 def _compute_verdict(
@@ -153,10 +153,9 @@ def _compute_flip_state(
 def build_dashboard_json(report: "ScoreReport") -> dict:
     """Build the full dashboard data payload from a ScoreReport.
 
-    Used by the Phase 7B Next.js scorecard dashboard. All field names match
-    the primer-dashboard skill specification exactly. No computation beyond
-    what is already present in the report; only M3 verdict and flip states
-    are derived (render-time classification per M3 ruling).
+    Used by the Next.js scorecard dashboard. All field names match the
+    primer-dashboard specification exactly. No computation beyond what is
+    already present in the report; only verdict and flip states are derived.
 
     Schema version: DASHBOARD_SCHEMA_VERSION (1).
 
@@ -226,14 +225,14 @@ def build_dashboard_json(report: "ScoreReport") -> dict:
     }
 
 
-# NOTE (V3 P4, §0.1.1 amendment): the legacy single-file `write_dashboard_json`
-# writer + `--data-output` path was removed; the full site tree is produced via
-# `--site-output` (repository.json + evaluations/<id>.json). `build_dashboard_json`
-# above remains the shared field-builder for `build_evaluation_json`.
+# NOTE: the legacy single-file `write_dashboard_json` writer + `--data-output` path was
+# removed; the full site tree is produced via `--site-output` (repository.json +
+# evaluations/<id>.json). `build_dashboard_json` above remains the shared
+# field-builder for `build_evaluation_json`.
 
 
 # ---------------------------------------------------------------------------
-# Phase P0 (V2) — site export builders
+# Site export builders
 # ---------------------------------------------------------------------------
 
 def build_evaluation_json(
@@ -242,9 +241,9 @@ def build_evaluation_json(
     repo_name: str,
     repo_url: "str | None",
 ) -> dict:
-    """Build the evaluations/<id>.json payload (V2 §3.2).
+    """Build the evaluations/<id>.json payload.
 
-    Returns build_dashboard_json(report) merged with V2 additions.
+    Returns build_dashboard_json(report) merged with additional site fields.
     schema_version is overridden to 2; build_dashboard_json is not mutated.
     No DB access; accepts plain dataclasses/ints (boundary invariant held).
     """
@@ -262,7 +261,7 @@ def build_repository_json(
     items: "list[tuple[int, ScoreReport]]",
     generated_at: str,
 ) -> dict:
-    """Build the repository.json payload (V2 §3.1).
+    """Build the repository.json payload.
 
     items: newest-first list of (reports.id, ScoreReport).
     No DB access; accepts plain dataclasses/ints (boundary invariant held).

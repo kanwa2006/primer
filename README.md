@@ -7,33 +7,13 @@
 
 > Every context-file tool generates. PRIMER measures.
 
-**PRIMER is an AI agent context-file measurement platform.**
+**PRIMER is a measurement harness for AI coding agent context files.**
 
-It answers one specific question with evidence: *does your `CLAUDE.md`, `AGENTS.md`, or `GEMINI.md` actually improve your AI coding agent's performance — or does it hurt?*
+It answers one specific question: *does your `CLAUDE.md` (or `AGENTS.md`) actually improve your AI coding agent's performance on your repository — or does it hurt?*
 
-PRIMER runs a controlled before/after experiment on your repository using real, deterministically-verifiable coding tasks inside hermetically isolated Docker containers. It reports a signed success-rate delta with a variance envelope. The result can be positive, zero, or negative. PRIMER is designed to tell you the truth, not to optimise for a good-looking number.
+PRIMER runs a controlled before/after experiment using real, deterministically-verifiable coding tasks inside hermetically isolated Docker containers. It reports a signed success-rate delta with a variance envelope.
 
 **[Live dashboard →](https://kanwa2006.github.io/primer/)**
-
----
-
-## The Problem
-
-AI coding agents are guided by context files you write or auto-generate. These files are unverified claims. You ship them into every agent session without knowing whether they help.
-
-Without measurement:
-
-- You cannot distinguish a helpful context file from a harmful one
-- Auto-generated files often reduce performance (see [Research basis](#research-basis))
-- You are making product decisions based on instinct, not data
-
-PRIMER makes the experiment automatic.
-
----
-
-## Research Basis
-
-ETH Zurich SRI Lab + LogicStar.ai ([arXiv:2602.11988](https://arxiv.org/abs/2602.11988), Feb 2026) found that LLM-auto-generated context files **reduce** agent task success in 5 of 8 settings while **raising inference cost >20%**. Developer-written files average +4 pp. The paper demonstrates the need for systematic measurement — PRIMER runs that measurement automatically on your repo.
 
 ---
 
@@ -64,10 +44,48 @@ primer eval       ← derives verifiable tasks from git history
 Each evaluation arm runs inside a hermetically isolated Docker container. Egress enforcement prevents the agent from calling external services during the run. The signed delta is written to SQLite and exported to JSON for the dashboard.
 
 **Two task types** derived from your git history:
-- `revert_reimplement` — revert a commit, ask the agent to re-implement it; success = tests pass
-- `stub_function` — stub a function, ask the agent to implement it; success = tests pass
+- `revert_reimplement` — revert a recent single-file commit, ask the agent to re-implement it; success = tests pass
+- `stub_function` — stub a top-level function body, ask the agent to implement it; success = tests pass
 
-Both are deterministic and pytest-verified. No LLM judge. No human grading.
+Both are deterministic and pytest-verified. No LLM judge. No human grading. Task derivation currently targets **Python repositories only**.
+
+---
+
+## Provider Support
+
+PRIMER has two distinct provider layers: **generation** (writing the context file) and **evaluation** (the agent that runs tasks inside Docker).
+
+### Generation providers — `primer init`
+
+| Provider | Status | Key required |
+|----------|--------|-------------|
+| Ollama (local) | ✅ Supported | No |
+| Anthropic | ✅ Supported | `ANTHROPIC_API_KEY` |
+| OpenAI | ✅ Supported | `OPENAI_API_KEY` |
+| Gemini | ✅ Supported | `GEMINI_API_KEY` |
+| OpenRouter | ✅ Supported | `OPENROUTER_API_KEY` |
+
+Install optional provider SDKs:
+```bash
+pip install -e .[openai]           # OpenAI
+pip install -e .[gemini]           # Gemini
+pip install -e .[all-providers]    # OpenAI + Gemini
+```
+
+### Evaluation agents — `primer eval`
+
+The eval agent runs **inside Docker** and requires its own API key injected into the container.
+
+| Agent | Status | Key required |
+|-------|--------|-------------|
+| Claude Code (`claude_code`) | ✅ Default, stable | `ANTHROPIC_API_KEY` |
+| Gemini CLI (`gemini`) | ⚠️ Experimental | `GEMINI_API_KEY` |
+
+> **Note:** Evaluation requires an agent key regardless of which generation provider you use. The default agent is Claude Code; it always requires `ANTHROPIC_API_KEY`.
+
+### What each provider writes
+
+Both eval adapters currently write `CLAUDE.md` as the context filename (the file the agent reads from the working directory). Running `primer init` with any generation provider writes the file named after the configured eval agent — `CLAUDE.md` for Claude Code, `CLAUDE.md` for the Gemini adapter.
 
 ---
 
@@ -81,7 +99,7 @@ Both are deterministic and pytest-verified. No LLM judge. No human grading.
 | **Flip** | A task whose outcome changed between arms (PASS→FAIL, FAIL→PASS, etc.) |
 | **Cost delta** | Separate stream: token cost WITH vs WITHOUT, tracked independently |
 
-A within-noise result (`≈`) is a valid, honest outcome — it means the experiment cannot distinguish your context file from noise at this sample size. That is useful information.
+A within-noise result (`≈`) is a valid, honest outcome — it means the experiment cannot distinguish your context file from noise at this sample size.
 
 ---
 
@@ -109,7 +127,7 @@ A within-noise result (`≈`) is a valid, honest outcome — it means the experi
 |-------------|-----|
 | Python ≥ 3.10 | All commands |
 | Docker (running) | `primer eval` |
-| Anthropic API key | `primer eval` (costs ~$0.01–$0.10 per run) |
+| API key for your chosen eval agent | `primer eval` (Claude Code costs ~$0.01–$0.10 per run) |
 | Ollama (optional) | `primer init` at $0 cost |
 
 ### Install
@@ -122,7 +140,7 @@ cp .env.example .env
 # Edit .env — set ANTHROPIC_API_KEY at minimum
 ```
 
-For all providers:
+For all generation providers:
 
 ```bash
 pip install -e .[all-providers]   # adds openai + google-genai
@@ -149,7 +167,7 @@ PRIMER eval → /path/to/your/repo
 1/5  Analysing repo ...
      Commit abc1234 | langs ['python']
 2/5  Generating CLAUDE.md ...
-     Generated 48 lines  (PRIMER overhead: ~$0.004)
+     Generated 48 lines  (overhead: ~$0.004)
 3/5  Deriving tasks ...
      5 validated tasks ready
 4/5  Building eval image ...
@@ -161,8 +179,6 @@ PRIMER eval → /path/to/your/repo
   WITHOUT    53.3%   WITH    65.3%
   Tasks      5       Runs    3
 ```
-
-> The delta here (+12 pp) is within the noise threshold (±15 pp), so the verdict is `≈ No measurable effect`. This is not a failure — it is an honest result at this sample size.
 
 ### Export and publish
 
@@ -188,66 +204,55 @@ primer export /path/to/your/repo --site-output dashboard/public
 
 ---
 
-## Who Is It For
-
-**Individual developers** building context files for their own repos — verify whether yours helps before shipping it.
-
-**Open-source maintainers** who want to show contributors that the project's `CLAUDE.md` is evidence-backed, not vibes-based.
-
-**AI engineers and researchers** studying the effect of context on agent performance — PRIMER gives you a reproducible, containerised experiment framework.
-
-**Teams evaluating agent tooling** — use PRIMER to A/B test different context file strategies against each other.
-
----
-
-## Competitive Positioning
-
-PRIMER occupies a narrow, specific niche: **controlled A/B measurement of AI agent context files**. It does not overlap with general LLM evaluation or observability platforms.
-
-| Tool | Primary category | Overlap with PRIMER |
-|------|-----------------|---------------------|
-| [Promptfoo](https://promptfoo.dev) | Prompt/LLM evaluation | Tests prompts against datasets; no context-file A/B, no Docker isolation |
-| [LangSmith](https://smith.langchain.com) | Observability + tracing | Session tracing and dataset evals; different category |
-| [Braintrust](https://braintrustdata.com) | Eval + experiment tracking | Human/LLM-graded evals; no before/after controlled design |
-| [DeepEval](https://github.com/confident-ai/deepeval) | Unit-test LLM evals | Metric-based LLM testing; no context-file focus |
-| [OpenAI Evals](https://github.com/openai/evals) | LLM capability benchmarks | Model evaluation, not context-file measurement |
-| [Arize Phoenix](https://phoenix.arize.com) | ML observability | Tracing and drift detection; different category |
-| [TruLens](https://trulens.org) | RAG/LLM feedback | Feedback-function evaluation; different category |
-| [AgentOps](https://agentops.ai) | Agent session monitoring | Runtime observability; different category |
-| [Helicone](https://helicone.ai) | LLM proxy + analytics | Cost/latency analytics; different category |
-| [Ragas](https://ragas.io) | RAG evaluation | Retrieval-augmented generation; different domain |
-| [Maxim AI](https://getmaxim.ai) | LLM CI/CD testing | Broader LLM app testing; no context-file A/B |
-| [Galileo](https://galileo.ai) | LLM evaluation | Hallucination and quality metrics; different domain |
-| [W&B Weave](https://wandb.ai/site/weave) | Eval + experiment tracking | General LLM/ML tracking; different scope |
-| [Patronus AI](https://patronus.ai) | Enterprise LLM eval | Red-teaming and safety; different domain |
-
-**What makes PRIMER different:**
-
-1. **Controlled experiment design** — before/after, same tasks, same agent, same repo; no other tool does this for context files
-2. **Docker isolation with egress enforcement** — prevents result contamination from external API calls during evaluation
-3. **Deterministic verification** — test-passing (not LLM-as-judge); the ground truth is pytest
-4. **Honest negative results** — the verdict taxonomy includes `≈` and `⊘`; no dashboard bias toward positive outcomes
-5. **Zero infrastructure for the dashboard** — static export to GitHub Pages; no server, no database
-
----
-
-## Scope and Honest Limitations
+## Scope and Limitations
 
 **What PRIMER does today:**
 - ✓ Generates context files via Ollama (free), Anthropic, OpenAI, Gemini, or OpenRouter
-- ✓ Derives coding tasks from your git history automatically
+- ✓ Derives coding tasks from git history automatically (Python repositories)
 - ✓ Runs controlled before/after evaluation in Docker
 - ✓ Reports signed delta with noise threshold
 - ✓ Exports static dashboard to GitHub Pages
 - ✓ Multi-evaluation history and cross-run comparison
 
 **What PRIMER does not do today:**
+- ✗ Non-Python repositories (task derivation targets Python only; tree-sitter is used for repo analysis)
 - ✗ Evaluation without Docker (Docker is required for isolation)
-- ✗ Non-Python repositories (tree-sitter supports JS/TS/Python; task derivation targets Python first)
-- ✗ Evaluation without an API key for the agent (Ollama agent path is experimental)
+- ✗ Evaluation without an API key for the eval agent
 - ✗ Real-time evaluation (runs are sequential; 5 tasks × 3 runs takes ~15–45 minutes)
+- ✗ Multiple eval agents in the same run (one agent per `primer eval` invocation)
 
-**Honest state of current data:** The dashboard currently shows evaluations from the `gemini-2.5-flash` experimental agent path with egress open (`egress_enforced: false`). All results are within-noise (0.0 pp ± 20 pp). This is honest data — the agent failed all stub tasks in both arms. A Claude Code evaluation against PRIMER itself is planned.
+**Current eval agent support:** Claude Code is the default and most tested. The Gemini CLI adapter is experimental — it was used for the live dashboard evaluations with egress open (`egress_enforced: false`); all results are within-noise (0.0 pp ± 20 pp).
+
+---
+
+## Repository Structure
+
+```
+primer/
+├── primer/               # Python package — CLI + evaluation engine
+│   ├── cli.py            # Composition root: init, eval, report, history, compare, export
+│   ├── config.py         # Pydantic settings; single source of config truth
+│   ├── eval/             # Eval harness: Docker runner, scorer, task derivation, adapters
+│   ├── generate/         # Context file writer
+│   ├── ingest/           # Repo analyser (tree-sitter, git log)
+│   ├── llm/              # Provider factory + adapters (Anthropic, OpenAI, Gemini, Ollama, OpenRouter)
+│   ├── report/           # Render + export (text, JSON, scores.json, dashboard JSON)
+│   └── store/            # SQLite persistence
+├── dashboard/            # Next.js 15 static dashboard → GitHub Pages
+│   ├── app/              # 7 routes: /, /evaluations/[id], /compare, /trends, /methodology, /score-guide, /export
+│   ├── components/       # VerdictHero, MetricsGrid, EvaluationLedger, ComparePanel, TrendsView, …
+│   └── lib/              # format.ts, verdict.ts, computeComparison.ts
+├── tests/                # 20 test files, 554 tests
+├── docs/
+│   └── assets/           # Screenshots for README
+├── docker/               # Eval container Dockerfile + egress proxy
+├── .github/
+│   ├── workflows/pages.yml        # CI/CD — builds and deploys dashboard
+│   ├── ISSUE_TEMPLATE/            # Bug report and feature request templates
+│   └── pull_request_template.md
+├── pyproject.toml        # Package metadata + pytest config
+└── .env.example          # Config template — copy to .env and fill in keys
+```
 
 ---
 
@@ -282,44 +287,15 @@ Push to `main` → GitHub Actions builds the Next.js static export → deploys t
 
 ---
 
-## Repository Structure
+## Research Basis
 
-```
-primer/
-├── primer/               # Python package — CLI + evaluation engine
-│   ├── cli.py            # Composition root: init, eval, report, history, compare, export
-│   ├── config.py         # Pydantic settings; single source of config truth
-│   ├── eval/             # Eval harness: Docker runner, scorer, task derivation, adapters
-│   ├── generate/         # Context file writer
-│   ├── ingest/           # Repo analyser (tree-sitter, git log)
-│   ├── llm/              # Provider factory + adapters (Anthropic, OpenAI, Gemini, Ollama)
-│   ├── report/           # Render + export (text, JSON, scores.json, dashboard JSON)
-│   └── store/            # SQLite persistence
-├── dashboard/            # Next.js 15 static dashboard → GitHub Pages
-│   ├── app/              # 7 routes: /, /evaluations/[id], /compare, /trends, /methodology, /score-guide, /export
-│   ├── components/       # VerdictHero, MetricsGrid, EvaluationLedger, ComparePanel, TrendsView, …
-│   └── lib/              # format.ts, verdict.ts, computeComparison.ts
-├── tests/                # 20 test files, 554 tests
-├── docs/
-│   └── assets/           # Screenshots for README and documentation
-├── docker/               # Eval container Dockerfile + egress proxy
-├── .github/
-│   ├── workflows/pages.yml        # CI/CD — builds and deploys dashboard
-│   ├── ISSUE_TEMPLATE/            # Bug report and feature request templates
-│   └── pull_request_template.md
-├── pyproject.toml        # Package metadata + pytest config
-├── .env.example          # Config template — copy to .env and fill in keys
-├── SECURITY.md
-├── CODE_OF_CONDUCT.md
-├── CONTRIBUTING.md
-└── CHANGELOG.md
-```
+ETH Zurich SRI Lab + LogicStar.ai ([arXiv:2602.11988](https://arxiv.org/abs/2602.11988), Feb 2026) found that LLM-auto-generated context files **reduce** agent task success in 5 of 8 settings while **raising inference cost >20%**. Developer-written files average +4 pp. The paper demonstrates the need for systematic measurement — PRIMER runs that measurement automatically on your repo.
 
 ---
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for setup instructions, development workflow, and the honesty invariants that govern all contributions.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for setup instructions, development workflow, and architecture invariants.
 
 ---
 

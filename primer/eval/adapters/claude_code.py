@@ -33,10 +33,8 @@ if TYPE_CHECKING:
 
 log = logging.getLogger(__name__)
 
-# ⚠️ [EMPIRICAL VERIFICATION REQUIRED] — see 16_BLK2_SPECIFICATION.md §4.4
-# FINGERPRINT_INSTRUCTION is a provisional candidate. It must be verified against a
-# live Claude Code run before the gate is considered operative. Replace this text with
-# the confirmed wording after completing the verification procedure.
+# ⚠️ [EMPIRICAL VERIFICATION REQUIRED] — fingerprint marker text is provisional.
+# It must be verified against a live Claude Code run before the gate is considered operative.
 FINGERPRINT_INSTRUCTION = (
     'PRIMER_FINGERPRINT_V1: Before starting the task, output '
     '"primer_fingerprint_v1_acknowledged" as the first line of your response.'
@@ -135,10 +133,10 @@ class ClaudeCodeAdapter(AgentAdapter):
         ]
 
     def fingerprint_instruction(self) -> str | None:
-        """Return the M4 fingerprint directive to append to CLAUDE.md in the WITH arm.
+        """Return the fingerprint directive to append to CLAUDE.md in the WITH arm.
 
         ⚠️ [EMPIRICAL VERIFICATION REQUIRED] — the text is provisional.
-        See 16_BLK2_SPECIFICATION.md §4 and §4.4 for verification procedure.
+        Verify against a live Claude Code run before treating the gate as operative.
         """
         return FINGERPRINT_INSTRUCTION
 

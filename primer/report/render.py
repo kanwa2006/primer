@@ -1,11 +1,11 @@
-"""Report rendering — pure output module (Phase 4).
+"""Report rendering — pure output module.
 
 render_report() receives a fully-computed ScoreReport and writes to stdout.
 
-Contracts (Session 2 §4.12, Decision Addendum M3):
+Contracts:
   - NO computation. All numbers come from the ScoreReport.
   - Signed delta colored by sign (green >0, yellow ~0/noise, red <0).
-  - M3 within-noise label: flag when |delta| <= max(1/n_tasks, stddev).
+  - Within-noise label: flag when |delta| <= max(1/n_tasks, stddev).
   - None delta prints the refusal reason, never a fabricated number.
   - Variance (stddev/min/max) always shown, never hidden.
   - Cost displayed with the correct confidence qualifier:
@@ -282,7 +282,7 @@ def _noise_label(report: ScoreReport) -> str | None:
 
 
 # ---------------------------------------------------------------------------
-# Phase 6: History table
+# History table
 # ---------------------------------------------------------------------------
 
 def render_history_table(
@@ -337,7 +337,7 @@ def render_history_table(
 
 
 # ---------------------------------------------------------------------------
-# Phase 6: Compare two reports
+# Compare two reports
 # ---------------------------------------------------------------------------
 
 def render_compare(

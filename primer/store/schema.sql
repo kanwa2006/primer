@@ -1,7 +1,7 @@
--- PRIMER SQLite schema (Session 2 §3 / Consolidated Spec §10)
+-- PRIMER SQLite schema
 -- Booleans stored as INTEGER (0/1); timestamps TEXT ISO-8601 UTC.
 -- raw_output/logs are REDACTED (log_safe()) before any write.
--- base_image stores the resolved sha256 digest (M5).
+-- base_image stores the resolved sha256 digest.
 
 CREATE TABLE IF NOT EXISTS _meta (
     key   TEXT PRIMARY KEY,

@@ -1,7 +1,5 @@
 """Schema version management and migration machinery for PRIMER store.
 
-Phase 6 — Post-MVP SQLite history/compare UX.
-
 Design principles:
   - Only primer/store/ imports sqlite3 (boundary invariant).
   - Migrations are additive (ALTER TABLE ADD COLUMN / CREATE TABLE).
@@ -90,7 +88,7 @@ def apply_migrations(conn: sqlite3.Connection) -> None:
 # ---------------------------------------------------------------------------
 
 def _migration_v2(conn: sqlite3.Connection) -> None:
-    """v1 → v2: add harness_fingerprint_valid column to runs (BLK-2 / M4 gate).
+    """v1 → v2: add harness_fingerprint_valid column to runs.
 
     Additive, backward-compatible. Existing rows have NULL (= not checked).
     Idempotent: safe to re-run on a db that already has the column.

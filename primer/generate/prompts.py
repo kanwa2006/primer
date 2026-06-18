@@ -1,6 +1,6 @@
 """System prompt and message templates for lean context-file generation.
 
-Design principles (Session 1 §2 Q3, Session 2 §4.5):
+Design principles:
 - Output MUST be a LEAN ≤~20-line file.
 - Include: real test/build commands, non-obvious conventions, internal APIs.
 - EXCLUDE: architecture prose, linter-enforceable rules, directory dumps,

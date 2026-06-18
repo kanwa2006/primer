@@ -1,11 +1,11 @@
 """Context-file generation — the ONE Layer-1 LLM call in the PRIMER pipeline.
 
-Key contracts (Session 2 §4.5, Decision Addendum M7):
+Key contracts:
 - Exactly ONE call to provider.complete() per successful generation.
 - Output must be a LEAN ≤~20-line file.
 - Validation: <50 chars OR no code-block/command-like content OR >8 KB / truncated
   → retry once with a simplified prompt → else GenerationError.
-- filename is sourced from the caller (M7: adapter.context_filename()), not hardcoded.
+- filename is sourced from the caller (adapter.context_filename()), not hardcoded.
 - Usage is tagged as PRIMER OVERHEAD — never mixed into eval cost (two-stream rule).
 - Temperature 0 for reproducibility (generator determinism confirmed requirement).
 """

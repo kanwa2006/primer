@@ -35,6 +35,7 @@ skills-lock.json
 Research/
 
 # Internal working / session docs (not for public repo)
+DESIGN.md
 PRIMER_FINAL_BUILD_SPECIFICATION.md
 PRIMER_UX_DISCOVERY_AUDIT.md
 STITCH_PROMPT.md

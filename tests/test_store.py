@@ -1,4 +1,4 @@
-"""Phase 6 tests: migrations, history, compare, mismatch guards."""
+"""Tests for store migrations, run history, comparison, and mismatch guards."""
 from __future__ import annotations
 
 import sqlite3

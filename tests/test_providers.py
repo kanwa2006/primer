@@ -1,4 +1,4 @@
-"""Phase 5 tests — full multi-provider matrix.
+"""Tests for the multi-provider LLM matrix.
 
 Covers:
 - OpenAIProvider: complete(), cost_confidence="estimated", estimate_cost, factory wiring

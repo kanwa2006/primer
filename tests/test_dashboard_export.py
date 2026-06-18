@@ -1,9 +1,9 @@
-"""Phase 7B acceptance tests: full dashboard data export.
+"""Tests for the full dashboard data export (build_dashboard_json and friends).
 
-Acceptance criteria (Phase 7B scope):
+Covers:
   - build_dashboard_json() produces a dict with schema_version, verdict,
     and all ScoreReport fields using exact field names.
-  - _compute_verdict() returns correct M3 label:
+  - _compute_verdict() returns correct verdict label:
       positive      : delta > max(1/n_tasks, stddev)
       negative      : delta < 0
       within-noise  : abs(delta) <= max(1/n_tasks, stddev)

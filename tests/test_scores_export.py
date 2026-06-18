@@ -1,6 +1,6 @@
-"""Phase 7A acceptance tests: scores.json export + primer export CLI command.
+"""Tests for scores.json badge export and the primer export CLI command.
 
-Acceptance criteria (Q5, Phase 7A scope):
+Covers:
   - build_scores_json() produces {schemaVersion, label, message, color}
   - color = green if delta > 0, yellow if delta == 0 or None, red if delta < 0
   - schemaVersion is always 1

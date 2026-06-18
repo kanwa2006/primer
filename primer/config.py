@@ -117,11 +117,11 @@ class Settings(BaseSettings):
                     f"Add it to .env (see .env.example)."
                 )
 
-        # Resolve the eval agent's required key from its adapter (Phase 3:
-        # replaces the static map). Each adapter declares its own requirement
-        # via required_env_key(); a None return means the agent needs no key
-        # (e.g. a local/offline agent). PRIMER is therefore not Anthropic-only —
-        # selecting a different agent re-points validation automatically.
+        # Resolve the eval agent's required key from its adapter.
+        # Each adapter declares its own requirement via required_env_key();
+        # a None return means the agent needs no key (e.g. a local/offline agent).
+        # PRIMER is therefore not Anthropic-only — selecting a different agent
+        # re-points validation automatically.
         from primer.eval.adapters import get_adapter
 
         agent = self.primer_agent.lower()

@@ -1,13 +1,13 @@
-"""AgentAdapter ABC (AD-3, AD-4).
+"""AgentAdapter ABC.
 
 Thin adapters supply:
   - required_env_key()   → the single env var injected in-container
   - api_host()           → egress allowlist target for the proxy
   - context_filename()   → file the agent reads from CWD (CLAUDE.md for ClaudeCode)
-  - build_invocation()   → in-container argv (identical both arms — AD-4)
-  - parse_telemetry()    → tokens/cost/agent_error — NO pass/fail (AD-4)
+  - build_invocation()   → in-container argv (identical both arms)
+  - parse_telemetry()    → tokens/cost/agent_error — NO pass/fail
 
-All Docker/network/timeout/cleanup logic is in runner.py (fat runner — AD-3).
+All Docker/network/timeout/cleanup logic is in runner.py (fat runner).
 Adapters MUST NOT import docker, open sockets, or decide pass/fail.
 """
 from __future__ import annotations

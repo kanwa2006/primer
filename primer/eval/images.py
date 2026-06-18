@@ -1,8 +1,8 @@
-"""Eval image builder (AD-2, M5).
+"""Eval image builder.
 
 build_eval_image() builds (or reuses) a per-(repo, commit) Docker image with
 deps pre-baked. Source is NOT baked — a fresh copy is mounted at run time.
-The base image tag is resolved to a sha256 digest at build time (M5).
+The base image tag is resolved to a sha256 digest at build time.
 
 This is the ONLY step that uses host-level network (for pip install).
 After this, all isolation steps in runner.py use no external network.

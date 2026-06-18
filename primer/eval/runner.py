@@ -1,22 +1,22 @@
-"""Fat runner — all isolation, timeout, and cleanup lives here (AD-3, Specs B+D).
+"""Fat runner — all isolation, timeout, and cleanup logic lives here.
 
-run_task() executes the full Spec B isolation sequence:
+run_task() executes the full isolation sequence:
   1. Fresh clone @ repo_commit → record repo_commit
   2. Apply task.mutation (failing start state)
   3. Write / omit context_filename from the context_content parameter
-     (with_context flag; flags identical both arms; source repo never touched — BLK-5)
+     (with_context flag; flags identical both arms; source repo never touched)
   4. EgressNetwork up (internal net + proxy sidecar)
   5. Start eval container on primer-internal only, one key via --env,
      cap_drop=ALL, no-new-privileges, mem_limit, nano_cpus, pids_limit
   6. Command: sh -c '<agent argv> > /work/.primer_agent.log 2>&1 ; <verify_cmd>'
-  7. container.wait(timeout=eval_timeout_s) — raises ReadTimeout on timeout (Spec D)
+  7. container.wait(timeout=eval_timeout_s) — raises ReadTimeout on timeout
   8. Read + redact agent log BEFORE rmtree
   9. finally: remove container, proxy, network, temp dir
  10. Post-run audit: docker ps -a must not show this container id
 
-passed = (exit_code == 0)  — the agent NEVER decides pass/fail (AD-4).
+passed = (exit_code == 0)  — the agent NEVER decides pass/fail.
 egress_enforced / network_mode come from EgressInfo.enforced (never optimistic).
-base_image = resolved sha256 digest stored in RunResult (M5).
+base_image = resolved sha256 digest stored in RunResult.
 """
 from __future__ import annotations
 

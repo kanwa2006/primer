@@ -11,7 +11,7 @@ primer/
 ├── primer/          # Python package — install with pip
 ├── dashboard/       # Next.js 15 dashboard — install with npm
 ├── tests/           # Python test suite (pytest, 20 files, 554 tests)
-├── docs/            # Architecture specs, screenshots
+├── docs/            # Screenshots for README and documentation
 └── .github/         # CI/CD workflow + issue templates
 ```
 

@@ -9,7 +9,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Added
-- V4 "Graphite Caliper" dashboard: aurora background, dark/light theme toggle, caliper confidence ruler, mobile-first hamburger nav
+- V4 dashboard: aurora background, dark/light theme toggle, caliper confidence ruler, mobile-first hamburger nav
 - 4 new routes: `/trends`, `/methodology`, `/score-guide`, `/export`
 - New components: `AuroraBg`, `ThemeProvider`, `ThemeToggle`, `VerdictBadge`, `DeltaCountUp`, `HeroBand`, `InstrumentStatusBar`, `PipelineChips`, `GraticuleBg`, `CursorCompanion`, `Magnetic`
 - `lib/verdict.ts` — centralised verdict taxonomy, noise-threshold logic, FLIP_LABELS, AGENT_DISPLAY

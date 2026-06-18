@@ -56,6 +56,9 @@ ledger.diff
 staged.txt
 taged.txt
 
+# Root-level export artifact (canonical copy lives in dashboard/public/scores.json)
+/scores.json
+
 # AI execution docs and session artifacts
 docs/PRIMER_V2_IMPLEMENTATION_PROMPTS.md
 docs/v3/

@@ -1,7 +1,7 @@
-"""P0-T1 unit tests for pure site-export builder functions (V2 Spec §4.10).
+"""Unit tests for pure site-export builder functions.
 
-Covers acceptance criteria (1)-(3), (5), (6) — the pure-function layer only.
-CLI orchestration (criterion 4) is tested in P0-T2 (test_site_export_cli.py).
+Tests the pure-function layer of the export pipeline: build_evaluation_json,
+build_repository_json, build_dashboard_json, and their file write helpers.
 """
 import json
 import re
@@ -73,7 +73,7 @@ def _make_report(**overrides) -> ScoreReport:
 
 
 # ---------------------------------------------------------------------------
-# §4.10 (3): build_evaluation_json
+# build_evaluation_json
 # ---------------------------------------------------------------------------
 
 class TestBuildEvaluationJson:
@@ -125,7 +125,7 @@ class TestBuildEvaluationJson:
 
 
 # ---------------------------------------------------------------------------
-# §4.10 (2): build_repository_json
+# build_repository_json
 # ---------------------------------------------------------------------------
 
 class TestBuildRepositoryJson:
@@ -244,13 +244,13 @@ class TestBuildRepositoryJson:
 
 
 # ---------------------------------------------------------------------------
-# §4.10 (5) REGRESSION: build_dashboard_json schema_version still == 1
+# REGRESSION: build_dashboard_json schema_version must remain 1
 # ---------------------------------------------------------------------------
 
 class TestRegressionFrozenBehavior:
 
     def test_build_dashboard_json_schema_version_still_1(self):
-        """REGRESSION §4.10(5): build_dashboard_json must still emit schema_version==1."""
+        """REGRESSION: build_dashboard_json must still emit schema_version==1."""
         assert build_dashboard_json(_REPORT)["schema_version"] == 1
 
     def test_build_evaluation_json_does_not_corrupt_subsequent_calls(self):
@@ -266,7 +266,7 @@ class TestRegressionFrozenBehavior:
 
 
 # ---------------------------------------------------------------------------
-# §4.10 (6) BOUNDARY: export.py must not import sqlite3 or docker
+# BOUNDARY: export.py must not import sqlite3 or docker
 # ---------------------------------------------------------------------------
 
 class TestBoundary:
@@ -275,11 +275,11 @@ class TestBoundary:
     ).read_text(encoding="utf-8")
 
     def test_no_sqlite3_import(self):
-        """BOUNDARY §4.10(6): export.py must not import sqlite3."""
+        """BOUNDARY: export.py must not import sqlite3."""
         assert "import sqlite3" not in self._EXPORT_SOURCE
 
     def test_no_docker_import(self):
-        """BOUNDARY §4.10(6): export.py must not import docker."""
+        """BOUNDARY: export.py must not import docker."""
         assert "import docker" not in self._EXPORT_SOURCE
 
 
@@ -323,7 +323,7 @@ class TestPrivacy:
 
 
 # ---------------------------------------------------------------------------
-# §4.10 (1): write helpers create files with correct structure
+# Write helpers — create files with correct structure
 # ---------------------------------------------------------------------------
 
 class TestWriteHelpers:
@@ -378,14 +378,14 @@ class TestWriteHelpers:
 
 
 # ---------------------------------------------------------------------------
-# P0-T2: CLI integration tests (§4.10 criteria 1, 2, 3, 4, 5, 7)
+# CLI integration tests for `primer export --site-output`
 # ---------------------------------------------------------------------------
 
 class TestExportSiteOutputCLI:
     """Integration tests for `primer export --site-output` wiring.
 
     Persists a ScoreReport via store.save_report, invokes the CLI via CliRunner,
-    then asserts the produced JSON tree satisfies §3.1/§3.2 and §4.10(1)-(5).
+    then asserts the produced JSON tree has correct schema and field structure.
     """
 
     # ------------------------------------------------------------------
@@ -420,7 +420,7 @@ class TestExportSiteOutputCLI:
         return CliRunner().invoke(app, args, env={"DATABASE_URL": db_url})
 
     # ------------------------------------------------------------------
-    # §4.10(1): all three output files are created
+    # all three output files are created
     # ------------------------------------------------------------------
 
     def test_creates_repository_json(self, tmp_path):
@@ -461,7 +461,7 @@ class TestExportSiteOutputCLI:
         assert (site_dir / "scores.json").exists()
 
     # ------------------------------------------------------------------
-    # §4.10(2): repository.json validates §3.1
+    # repository.json validates schema
     # ------------------------------------------------------------------
 
     def test_repository_json_schema_version_2(self, tmp_path):
@@ -531,7 +531,7 @@ class TestExportSiteOutputCLI:
         assert data["repo"]["latest_commit"] == data["evaluations"][0]["repo_commit"]
 
     # ------------------------------------------------------------------
-    # §4.10(3): evaluations/<id>.json validates §3.2
+    # evaluations/<id>.json validates schema
     # ------------------------------------------------------------------
 
     def test_evaluation_json_schema_version_2_kind_evaluation(self, tmp_path):
@@ -580,7 +580,7 @@ class TestExportSiteOutputCLI:
         assert "url" in data["repo"]
 
     # ------------------------------------------------------------------
-    # §4.10(4): no absolute repo_path in any exported JSON
+    # no absolute repo_path in any exported JSON
     # ------------------------------------------------------------------
 
     def test_no_abs_path_in_repository_json(self, tmp_path):
@@ -610,7 +610,7 @@ class TestExportSiteOutputCLI:
         assert str(repo_dir) not in content
 
     # ------------------------------------------------------------------
-    # §4.10(5) REGRESSION: existing flags behavior unchanged
+    # REGRESSION: existing flags behavior unchanged
     # ------------------------------------------------------------------
 
     def test_existing_export_no_site_flags_produces_scores_json(self, tmp_path):
@@ -627,8 +627,7 @@ class TestExportSiteOutputCLI:
         assert data["schemaVersion"] == 1
         assert "label" in data and "message" in data and "color" in data
 
-    # test_data_output_still_produces_dashboard_json — REMOVED (V3 P4, §0.1.1):
-    # the --data-output flag was deleted; --site-output is the dashboard feed.
+    # NOTE: the --data-output flag was deleted; --site-output is the dashboard feed.
 
     # ------------------------------------------------------------------
     # Empty-repo guard: no reports → exit 1

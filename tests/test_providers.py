@@ -362,11 +362,11 @@ class TestOpenRouterProvider:
 
 
 # ---------------------------------------------------------------------------
-# Factory wiring — Phase 5 providers
+# Factory wiring — additional providers
 # ---------------------------------------------------------------------------
 
-class TestFactoryPhase5:
-    """factory.get_provider() instantiates Phase 5 providers from config."""
+class TestFactoryAdditionalProviders:
+    """factory.get_provider() instantiates additional providers from config."""
 
     def test_openai_provider_wired(self, monkeypatch):
         monkeypatch.setenv("PRIMER_LLM_PROVIDER", "openai")

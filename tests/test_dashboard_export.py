@@ -98,7 +98,7 @@ class TestDashboardSchemaVersion:
 
 
 # ---------------------------------------------------------------------------
-# 2. _compute_verdict() — M3 rule
+# 2. _compute_verdict()
 # ---------------------------------------------------------------------------
 
 class TestComputeVerdict:
@@ -371,7 +371,7 @@ class TestBuildDashboardJsonProvenance:
 
 
 # ---------------------------------------------------------------------------
-# 8. write_dashboard_json() — REMOVED (V3 P4, §0.1.1 amendment)
+# 8. write_dashboard_json() — REMOVED
 #    The legacy single-file data.json writer was deleted; the full site tree is
 #    produced via --site-output. build_dashboard_json (the shared field-builder)
 #    remains and is covered by sections 4–7 above.
@@ -379,7 +379,7 @@ class TestBuildDashboardJsonProvenance:
 
 
 # ---------------------------------------------------------------------------
-# 9. CLI: primer export --data-output — REMOVED (V3 P4, §0.1.1 amendment)
+# 9. CLI: primer export --data-output — REMOVED
 #    The --data-output flag + legacy data.json path were deleted. The dashboard
 #    is now fed by --site-output (repository.json + evaluations/<id>.json),
 #    covered by tests/test_site_export.py. Badge (scores.json) export unchanged.

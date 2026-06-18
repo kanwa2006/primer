@@ -1,4 +1,4 @@
-"""Tests for eval/tasks.py (Spec C — deterministic task derivation).
+"""Tests for eval/tasks.py — deterministic task derivation.
 
 These tests run WITHOUT Docker — they test the task derivation logic
 using the py_repo fixture which has a real pytest suite.
@@ -297,7 +297,7 @@ def test_apply_stub_makes_test_fail(py_repo_copy):
 # ---------------------------------------------------------------------------
 
 def test_derive_tasks_determinism(py_repo_path, mock_config):
-    """Same (repo, seed) → identical task list (Spec C)."""
+    """Same (repo, seed) → identical task list."""
     from primer.eval.tasks import derive_tasks
     from primer.ingest.models import RepoProfile, CommandSet
 

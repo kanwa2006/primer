@@ -1,4 +1,4 @@
-"""Tests for primer/config.py — Phase 0 acceptance criteria."""
+"""Tests for primer/config.py — settings defaults, validation, and secret redaction."""
 from __future__ import annotations
 
 import pytest
@@ -18,7 +18,7 @@ class TestDefaults:
         assert s.primer_default_model == "claude-sonnet-4-6"
 
     def test_eval_timeout_default(self, clean_env):
-        """M1: timeout must be 600."""
+        """Eval timeout must be 600 seconds."""
         s = Settings()
         assert s.primer_eval_timeout_s == 600
 
@@ -72,7 +72,7 @@ class TestDefaults:
 
 
 class TestDockerClientTimeout:
-    """Spec D: docker_client_timeout_s == eval_timeout_s + 30."""
+    """docker_client_timeout_s must equal eval_timeout_s + 30."""
 
     def test_default_is_630(self, clean_env):
         s = Settings()
@@ -146,8 +146,8 @@ class _FakeAdapter(AgentAdapter):
     """Minimal test-double adapter: declares an env key (or None) for validation.
 
     Only required_env_key() matters here; the other members satisfy the ABC.
-    Production gemini/openai/ollama eval adapters are POST-MVP (spec M8), so we
-    prove provider-agnostic validation with test doubles rather than shipping them.
+    Additional eval adapters are validated via test doubles rather than shipped
+    implementations to keep tests independent of provider API availability.
     """
 
     def __init__(self, name: str, env_key: str | None):

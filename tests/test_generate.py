@@ -1,13 +1,11 @@
-"""Phase 2 tests — LLM provider layer + context-file generation.
+"""Tests for the LLM provider layer and context-file generation pipeline.
 
-Acceptance criteria tested here (Session 2 §9):
+Covers:
   llm/base.py:
     - log_safe() redacts sk-, sk-ant-, AIza patterns (unit-tested with samples)
     - ABC defines complete/estimate_cost/supports_caching
   llm/factory.py:
     - Returns correct provider per primer_llm_provider; unknown ⇒ ValueError
-    - tests/test_arch_boundaries.py finds zero vendor-SDK imports outside primer/llm/
-      (that test is already in test_arch_boundaries.py; Phase 2 makes it non-trivial)
   llm/anthropic.py:
     - complete() returns LLMResponse with exact token counts; cost_confidence="exact"
     - (live call gated by ANTHROPIC_API_KEY; mocked here)
@@ -248,7 +246,7 @@ class TestGetProvider:
             get_provider(config)
 
     def test_post_mvp_provider_raises_value_error(self, monkeypatch):
-        # Phase 5: openai/gemini/openrouter are now implemented.
+        # openai/gemini/openrouter are now implemented.
         # They raise ConfigError (missing key), not ValueError("Post-MVP").
         # Verify unknown provider still raises ValueError.
         monkeypatch.setenv("PRIMER_LLM_PROVIDER", "unknown_provider_xyz")

@@ -1,12 +1,12 @@
-"""Phase 1 acceptance tests for primer/ingest/.
+"""Tests for primer/ingest/ — repository analysis and command detection.
 
-Acceptance criteria (Session 2 §9 / Consolidated Spec §11):
-  - analyze_repo() on the py + ts fixtures returns a RepoProfile a human recognises.
-  - Deterministic across runs (same path → identical profile).
-  - Makes no LLM / network call (AD-1).
-  - detect_commands() returns a correct, real runnable test_cmd on both fixtures.
-  - Unknown commands are None, never guessed.
-  - All model dataclasses are importable and instantiable.
+Covers:
+  - analyze_repo() returns a RepoProfile for py and ts fixtures
+  - Deterministic across runs (same path → identical profile)
+  - Makes no LLM / network call
+  - detect_commands() returns correct, runnable test_cmd on both fixtures
+  - Unknown commands are None, never guessed
+  - All model dataclasses are importable and instantiable
 """
 from __future__ import annotations
 

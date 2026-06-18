@@ -1,4 +1,4 @@
-"""Security scaffold tests — Phase 0 acceptance criteria P0.2(1–2) and P0.5."""
+"""Security scaffold tests — pre-commit hooks, secrets baseline, and .env isolation."""
 from __future__ import annotations
 
 import subprocess

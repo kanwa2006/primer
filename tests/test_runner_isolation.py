@@ -1,21 +1,12 @@
-"""THE Phase 3 acceptance test (Session 2 §9).
+"""Tests for Docker runner isolation and evaluation harness correctness.
 
-Tests the full runner isolation contract (Spec B, Spec D, M4, M5, AD-3, AD-4).
+Covers the full runner isolation contract: container lifecycle, egress enforcement,
+context-file arm control, fingerprint validity gating, timeout handling, and
+RunResult field integrity.
 
 Most tests here mock Docker so they run in CI without a Docker daemon.
-The integration tests (marked docker_required) need a real Docker daemon;
-they are skipped by default and can be run with --run-docker-tests.
-
-Acceptance criteria covered:
-  - passed comes from a real exit code, never the agent (AD-4)
-  - both arms identical except the context file (M4, Spec B-8)
-  - docker ps -a empty after run (Spec B-12)
-  - temp dirs deleted (Spec D finally)
-  - provider/model/egress_enforced/network_mode/repo_commit set on every RunResult
-  - ReadTimeout → passed=False, timeout=True, cleaned-up container (Spec D)
-  - base_image stores a resolved digest (M5)
-  - caps_dropped=True on every run
-  - agent_log_path is written and contains redacted log
+Integration tests (marked docker_required) need a real Docker daemon and are
+skipped by default; run with --run-docker-tests to enable them.
 """
 from __future__ import annotations
 
@@ -230,7 +221,7 @@ def _build_docker_mock_stack():
 
 
 def test_source_repo_not_mutated(py_repo_path):
-    """BLK-5 acceptance gate: a WITH-arm run_task must NOT touch the source repo.
+    """A WITH-arm run_task must NOT touch the source repo.
 
     The runner writes the context file into the cloned work_dir only; the
     caller's source repository is never written to or deleted from.
@@ -263,7 +254,7 @@ def test_source_repo_not_mutated(py_repo_path):
         run_task(
             task=task,
             repo_path=str(py_repo_path),
-            with_context=True,  # WITH arm — the dangerous path pre-BLK-5
+            with_context=True,  # WITH arm
             profile=profile,
             config=config,
             adapter=adapter,
@@ -273,7 +264,7 @@ def test_source_repo_not_mutated(py_repo_path):
 
     # The source repo's CLAUDE.md must NOT have been created.
     assert not ctx_file.exists(), (
-        "BLK-5 violated: run_task wrote the context file into the source repo"
+        "run_task wrote the context file into the source repo"
     )
     # The source repo listing must be byte-for-byte identical (no add, no delete).
     after = sorted(p.name for p in py_repo_path.iterdir())
@@ -324,19 +315,19 @@ def test_context_file_written_to_clone(py_repo_path, tmp_path):
             context_content=CONTENT,
         )
 
-    # After BLK-2, the runner appends the fingerprint instruction to the content.
+    # The runner appends the fingerprint instruction to the content.
     # Assert the original content is present and the fingerprint instruction is appended.
     written = captured.get("written")
     assert written is not None, "WITH arm must write a file into the cloned work_dir"
     assert CONTENT in written, "Original context_content must be present in written file"
     from primer.eval.adapters.claude_code import FINGERPRINT_INSTRUCTION
     assert FINGERPRINT_INSTRUCTION in written, (
-        "Fingerprint instruction must be appended to the written file (BLK-2)"
+        "Fingerprint instruction must be appended to the written file"
     )
 
 
 # ---------------------------------------------------------------------------
-# BLK-2: Harness-validity fingerprint gate (M4 / 16_BLK2_SPECIFICATION.md)
+# Harness-validity fingerprint gate
 # ---------------------------------------------------------------------------
 
 def test_fingerprint_appended_to_with_arm_context_file(py_repo_path):
@@ -578,7 +569,7 @@ def test_migration_v2_adds_fingerprint_column(tmp_path):
         CURRENT_SCHEMA_VERSION,
     )
 
-    assert CURRENT_SCHEMA_VERSION == 2, "CURRENT_SCHEMA_VERSION must be 2 after BLK-2"
+    assert CURRENT_SCHEMA_VERSION == 2, "CURRENT_SCHEMA_VERSION must be 2"
 
     db_path = tmp_path / "migration_test.db"
     conn = _sqlite.connect(str(db_path))
@@ -648,14 +639,14 @@ def test_migration_v2_adds_fingerprint_column(tmp_path):
 
 
 def test_flags_identical_both_arms():
-    """Invocation flags must be identical for both arms (M4, AD-4)."""
+    """Invocation flags must be identical for both arms."""
     adapter = ClaudeCodeAdapter()
     task = _make_task()
 
     argv = adapter.build_invocation(task)
 
-    # No --bare flag (M4)
-    assert "--bare" not in argv, "build_invocation must not include --bare (M4)"
+    # No --bare flag
+    assert "--bare" not in argv, "build_invocation must not include --bare"
 
     # Output format is json
     assert "--output-format" in argv
@@ -691,7 +682,7 @@ def test_flags_identical_both_arms():
 # ---------------------------------------------------------------------------
 
 def test_run_task_passed_from_exit_code(py_repo_path):
-    """passed must come from verify_cmd exit code, never the agent (AD-4)."""
+    """passed must come from verify_cmd exit code, never the agent."""
     from primer.eval.runner import run_task
 
     config = _make_config()
@@ -726,7 +717,7 @@ def test_run_task_passed_from_exit_code(py_repo_path):
          patch("primer.eval.runner._apply_mutation"), \
          patch("primer.eval.runner._get_image_digest", return_value="python:3.11-slim@sha256:abc"):  # pragma: allowlist secret
 
-        # After BLK-5 the runner writes the context file into the clone itself;
+        # The runner writes the context file into the clone itself;
         # no source-repo staging is needed. WITHOUT arm passes no context_content.
         import tempfile, os
         with tempfile.TemporaryDirectory() as tmp:
@@ -752,7 +743,7 @@ def test_run_task_passed_from_exit_code(py_repo_path):
 
 
 def test_run_task_timeout_handling(py_repo_path):
-    """ReadTimeout → passed=False, timeout=True, container cleaned up (Spec D)."""
+    """ReadTimeout → passed=False, timeout=True, container cleaned up."""
     import requests.exceptions
     from primer.eval.runner import run_task
 
@@ -1658,7 +1649,7 @@ def test_run_task_real_docker_without_context(py_repo_path):
 
 
 # ---------------------------------------------------------------------------
-# BLK-2 Live Gates — G-6, G-8, G-9 (16_BLK2_SPECIFICATION.md §5, §12.7)
+# Live integration gates — fingerprint validity (requires Docker + real API key)
 # ---------------------------------------------------------------------------
 #
 # Run with:
@@ -1677,7 +1668,7 @@ _live_gate = pytest.mark.skipif(
     or not os.environ.get("ANTHROPIC_API_KEY", "")
     or not os.environ.get("PRIMER_EVAL_IMAGE", ""),
     reason=(
-        "BLK-2 live gate: requires PRIMER_RUN_DOCKER_TESTS=1, "
+        "Live integration test: requires PRIMER_RUN_DOCKER_TESTS=1, "
         "ANTHROPIC_API_KEY, and PRIMER_EVAL_IMAGE to be set"
     ),
 )
@@ -1688,7 +1679,7 @@ _LIVE_CONTEXT = "# PRIMER proof context\nRun tests with: python -m pytest\n"
 
 
 def _make_live_task() -> Task:
-    """Task for BLK-2 live proof tests.
+    """Task for live fingerprint-validity proof tests.
 
     verify_cmd is 'true' so pass/fail is deterministic and independent of
     whether the agent actually fixes the code.  The mutation stubs add() to
@@ -1724,13 +1715,13 @@ def _make_live_config():
 
 @_live_gate
 def test_live_with_arm_fingerprint_found_in_log(py_repo_path):
-    """G-6: Live WITH-arm run_task() — marker found in log; harness_fingerprint_valid=True.
+    """Live WITH-arm run_task() — marker found in log; harness_fingerprint_valid=True.
 
-    Probe A standing gate: verifies that a real Claude Code agent run with
-    FINGERPRINT_INSTRUCTION appended to CLAUDE.md produces FINGERPRINT_MARKER
-    in its log output, and that RunResult.harness_fingerprint_valid is True.
+    Verifies that a real Claude Code agent run with FINGERPRINT_INSTRUCTION
+    appended to CLAUDE.md produces FINGERPRINT_MARKER in its log output,
+    and that RunResult.harness_fingerprint_valid is True.
 
-    Pass criteria (spec §5 G-6):
+    Pass criteria:
       - result.harness_fingerprint_valid is True
       - FINGERPRINT_MARKER present in result.agent_log_path content
 
@@ -1753,11 +1744,9 @@ def test_live_with_arm_fingerprint_found_in_log(py_repo_path):
     )
 
     assert result.harness_fingerprint_valid is True, (
-        f"G-6 FAIL: WITH arm must have harness_fingerprint_valid=True. "
+        f"WITH arm must have harness_fingerprint_valid=True. "
         f"Got: {result.harness_fingerprint_valid!r}. "
-        f"Inspect agent log for marker absence: {result.agent_log_path}\n"
-        f"If marker is absent, revise FINGERPRINT_INSTRUCTION per "
-        f"16_BLK2_SPECIFICATION.md §4.4."
+        f"Inspect agent log for marker absence: {result.agent_log_path}"
     )
 
     # Confirm the marker is present in the persisted redacted log file.

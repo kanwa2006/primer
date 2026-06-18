@@ -247,7 +247,7 @@ PRIMER occupies a narrow, specific niche: **controlled A/B measurement of AI age
 - ✗ Evaluation without an API key for the agent (Ollama agent path is experimental)
 - ✗ Real-time evaluation (runs are sequential; 5 tasks × 3 runs takes ~15–45 minutes)
 
-**Honest state of current data:** The dashboard currently shows evaluations from the `gemini-2.5-flash` experimental agent path with egress open (`egress_enforced: false`). All results are within-noise (0.0 pp ± 20 pp). This is honest data — the agent failed all stub tasks in both arms. A Claude Code evaluation against PRIMER itself is on the roadmap.
+**Honest state of current data:** The dashboard currently shows evaluations from the `gemini-2.5-flash` experimental agent path with egress open (`egress_enforced: false`). All results are within-noise (0.0 pp ± 20 pp). This is honest data — the agent failed all stub tasks in both arms. A Claude Code evaluation against PRIMER itself is planned.
 
 ---
 

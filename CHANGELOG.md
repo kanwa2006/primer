@@ -33,4 +33,4 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - `primer eval` requires Docker and an LLM API key (cloud providers charge per token)
 - Ollama integration is free; Anthropic, OpenAI, and Gemini are pay-per-token
 - Current evaluation data uses an experimental Gemini agent path with egress open — all results are within-noise
-- Evaluating PRIMER against itself (closing the loop on the badge) is a known roadmap item
+- Evaluating PRIMER against itself (closing the loop on the badge) is planned

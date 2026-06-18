@@ -1,6 +1,6 @@
-"""Architecture boundary tests — seed pass (Phase 0); gains teeth as modules land.
+"""Architecture boundary tests — import layer invariants.
 
-Mandatory by Phase 2. Three invariants (Session 2 §2):
+Three invariants enforced across the package:
   1. Vendor SDK imports only under primer/llm/
   2. docker imports only under primer/eval/
   3. sqlite3/aiosqlite imports only under primer/store/

@@ -110,7 +110,7 @@ npm run build
 ## Development workflow
 
 1. Branch off `main` (or work directly on a feature branch off `main`)
-2. Follow the module boundaries in `CLAUDE.md` — engine and dashboard are separate layers
+2. Respect the module boundaries described under [Architecture invariants](#architecture-invariants) — engine and dashboard are separate layers
 3. Do not modify the evaluation engine, scoring logic, or data contracts without discussion
 4. Validate before committing:
    - `pytest tests/ -v` (Python)
@@ -124,8 +124,7 @@ Each PR description should include:
 1. Files created
 2. Files modified
 3. Tests added or updated
-4. Acceptance criteria satisfied
-5. Unresolved blockers (if any)
+4. Unresolved blockers (if any)
 
 ---
 

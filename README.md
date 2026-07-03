@@ -1,4 +1,5 @@
 [![CI](https://github.com/kanwa2006/primer/actions/workflows/pages.yml/badge.svg)](https://github.com/kanwa2006/primer/actions/workflows/pages.yml)
+[![PyPI](https://img.shields.io/pypi/v/primer-eval)](https://pypi.org/project/primer-eval/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![PRIMER score](https://img.shields.io/endpoint?url=https%3A%2F%2Fkanwa2006.github.io%2Fprimer%2Fscores.json)](https://kanwa2006.github.io/primer/)
 [![Python](https://img.shields.io/badge/python-%E2%89%A53.10-blue)](pyproject.toml)
@@ -14,6 +15,14 @@ It answers one specific question: *does your `CLAUDE.md` (or `AGENTS.md`) actual
 PRIMER runs a controlled before/after experiment using real, deterministically-verifiable coding tasks inside hermetically isolated Docker containers. It reports a signed success-rate delta with a variance envelope.
 
 **[Live dashboard →](https://kanwa2006.github.io/primer/)**
+
+---
+
+## Demo
+
+[![PRIMER demo video](docs/assets/demo-thumbnail.png)](https://github.com/kanwa2006/primer/releases/tag/v1.0.0)
+
+*3-minute walkthrough: CLI help → repo analysis → context generation → evaluation history → report export → live dashboard*
 
 ---
 
@@ -67,9 +76,9 @@ PRIMER has two distinct provider layers: **generation** (writing the context fil
 
 Install optional provider SDKs:
 ```bash
-pip install -e .[openai]           # OpenAI
-pip install -e .[gemini]           # Gemini
-pip install -e .[all-providers]    # OpenAI + Gemini
+pip install primer-eval[openai]           # OpenAI
+pip install primer-eval[gemini]           # Gemini
+pip install primer-eval[all-providers]    # OpenAI + Gemini
 ```
 
 ### Evaluation agents — `primer eval`
@@ -133,9 +142,20 @@ A within-noise result (`≈`) is a valid, honest outcome — it means the experi
 ### Install
 
 ```bash
+pip install primer-eval
+```
+
+Or install from source:
+
+```bash
 git clone https://github.com/kanwa2006/primer.git
 cd primer
 pip install -e .
+```
+
+Then configure your environment:
+
+```bash
 cp .env.example .env
 # Edit .env — set ANTHROPIC_API_KEY at minimum
 ```
@@ -143,7 +163,7 @@ cp .env.example .env
 For all generation providers:
 
 ```bash
-pip install -e .[all-providers]   # adds openai + google-genai
+pip install primer-eval[all-providers]   # adds openai + google-genai
 ```
 
 ### Run
@@ -242,7 +262,7 @@ primer/
 │   ├── app/              # 7 routes: /, /evaluations/[id], /compare, /trends, /methodology, /score-guide, /export
 │   ├── components/       # VerdictHero, MetricsGrid, EvaluationLedger, ComparePanel, TrendsView, …
 │   └── lib/              # format.ts, verdict.ts, computeComparison.ts
-├── tests/                # 20 test files, 554 tests
+├── tests/                # 22 test files, 554 tests
 ├── docs/
 │   └── assets/           # Screenshots for README
 ├── docker/               # Eval container Dockerfile + egress proxy
@@ -260,7 +280,7 @@ primer/
 
 ### Test suite
 
-**Python — 554 tests across 20 files:**
+**Python — 554 tests across 22 files:**
 
 ```bash
 pip install -e .[dev]

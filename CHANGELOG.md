@@ -6,14 +6,21 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
-## [Unreleased]
+## [1.0.0] — 2026-06-26
 
 ### Added
+- **PyPI distribution** — `pip install primer-eval` for end-user installation
 - V4 dashboard redesign: aurora background, dark/light theme toggle, mobile-first navigation
 - New routes: `/trends`, `/methodology`, `/score-guide`, `/export`
 - WCAG AA colour tokens and improved accessibility across all components
 - `SECURITY.md`, `CODE_OF_CONDUCT.md` — community health files
 - GitHub issue templates and PR template
+- Demo video — 3-minute walkthrough of the full CLI + dashboard workflow
+- OpenRouter generation provider support
+
+### Changed
+- Package name: `primer` → `primer-eval` (PyPI)
+- Version: 0.1.0 → 1.0.0
 
 ---
 

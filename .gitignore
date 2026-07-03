@@ -57,6 +57,60 @@ ledger.diff
 staged.txt
 taged.txt
 
+# Video build artifacts (demo video production pipeline)
+*.mp3
+*.srt
+concat.txt
+assembled_video.mp4
+assembled_with_audio.mp4
+final_delivery.mp4
+final_primer_demo.mp4
+primer_demo.mp4
+primer_demo_final.mp4
+primer_demo_v2.mp4
+primer_thumbnail_*.png
+scenes/
+preview_frames/
+
+# Video build scripts (session artifacts, not part of the distributed tool)
+build_final.py
+build_final_video.py
+build_s7.py
+build_srt.py
+capture_scenes.py
+check_srt.py
+check_webp.py
+convert_full_demo.py
+extract_preview.py
+final_convert.py
+find_gap.py
+gen_narration.py
+gen_narration_v4.py
+gen_srt.py
+gen_title_cta.py
+make_final_mp4.py
+webp_to_mp4.py
+test_capture.py
+terminal_demo.html
+terminal_server.js
+
+# QC / spot-check screenshots
+qc_*.png
+s5_spotcheck_*.png
+s2_frame.png
+s5_frame*.png
+s6_frame.png
+s6_last_frame.png
+s5_last_frame.png
+s5_new_frame.png
+test_result.png
+
+# Root-level Node.js (dashboard has its own)
+/package.json
+
+# CLAUDE.md (generated context file, not tracked)
+CLAUDE.md
+
 # Root-level export artifact (canonical copy lives in dashboard/public/scores.json)
 /scores.json
 
@@ -69,3 +123,5 @@ docs/PRIMER_V2_ARCHITECTURE_IMPLEMENTATION_SPEC.md
 PRIMER_V3_FINAL_ACCEPTANCE_AUDIT.md
 RELEASE_READY.md
 
+# Blog drafts (review copies, not tracked)
+blog/
